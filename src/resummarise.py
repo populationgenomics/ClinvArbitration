@@ -305,7 +305,8 @@ def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
 
 
 def get_all_decisions(
-    submission_file: str, allele_ids: set
+    submission_file: str,
+    allele_ids: set,
 ) -> dict[int, list[Submission]]:
     """
     obtains all submissions per-allele which pass basic criteria
@@ -323,7 +324,6 @@ def get_all_decisions(
     submission_dict = defaultdict(list)
 
     for line in lines_from_gzip(submission_file):
-
         a_id, line_sub = process_line(line)
 
         # skip rows where the variantID isn't in this mapping
@@ -411,7 +411,7 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     """
 
     # start a hail runtime
-    hl.init_batch(default_reference='GRCh38')
+    hl.init(default_reference='GRCh38')
 
     # define the schema for each written line
     schema = hl.dtype(
