@@ -20,16 +20,23 @@ from cyvcf2 import VCF, Variant
 
 import hail as hl
 
+
 """
 Takes a VCF of annotated Pathogenic Clinvar Variants
 re-indexes the data to be queryable on Transcript and Codon
 writes the resulting Hail Table to the specified path
 """
 
+# update these values to reflect the VEP version in use
+# the first should be the ENSP ID
+# the second should be the residue in the protein
+PROTEIN_ID = 'ensp'
+PROTEIN_POSITION = 'protein_position'
+
 
 def pull_vep_from_header(vcf: VCF) -> list[str]:
     """
-    yank the description out of the VCF header
+    yank the CSQ line out of the VCF header
     """
     for element in vcf.header_iter():
         if element['HeaderType'] == 'INFO' and element['ID'] == 'CSQ':
@@ -43,8 +50,7 @@ def pull_vep_from_header(vcf: VCF) -> list[str]:
 
 
 def variant_consequences(
-    variant: Variant,
-    csq_header: list[str],
+    variant: Variant, csq_header: list[str]
 ) -> list[dict[str, str]]:
     """
     extracts the consequences for each transcript in this variant
@@ -87,15 +93,16 @@ for variant in vcf_reader:
     # iterate over all missense consequences
     for csq_dict in variant_consequences(variant, header_csq):
         # add this clinvar entry in relation to the protein consequence
-        protein_key = f"{csq_dict['protein_id']}:{csq_dict['protein_start']}"
+        protein_key = f"{csq_dict[PROTEIN_ID]}:{csq_dict[PROTEIN_POSITION]}"
         clinvar_dict[protein_key].add(clinvar_key)
 
-# save that somewhere
+# save the dictionary locally
 json_out_path = f'{args.o}.json'
 with open(json_out_path, 'w') as f:
     for key, value in clinvar_dict.items():
         new_dict = {'newkey': key, 'clinvar_alleles': '+'.join(value)}
-        json.dumps(f'{json.dumps(new_dict)}\n')
+        f.write(f'{json.dumps(new_dict)}\n')
+print(f'JSON written to {json_out_path}')
 
 # now set a schema to read that into a table... if you want hail
 schema = hl.dtype('struct{newkey:str,clinvar_alleles:str}')
@@ -107,3 +114,4 @@ ht = ht.key_by(ht.newkey)
 
 # write out
 ht.write(f'{args.o}.ht', overwrite=True)
+print(f'Hail Table written to {args.o}.ht')
