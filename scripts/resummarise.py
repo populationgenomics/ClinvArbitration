@@ -411,7 +411,8 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     """
 
     # start a hail runtime
-    hl.init(default_reference='GRCh38')
+    hl.init()
+    hl.default_reference(hl.get_reference('GRCh38'))
 
     # define the schema for each written line
     schema = hl.dtype(

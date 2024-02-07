@@ -50,7 +50,7 @@ def pull_vep_from_header(vcf: VCF) -> list[str]:
 
 
 def variant_consequences(
-    variant: Variant, csq_header: list[str]
+    variant: Variant, csq_header: list[str],
 ) -> list[dict[str, str]]:
     """
     extracts the consequences for each transcript in this variant
