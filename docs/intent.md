@@ -42,11 +42,7 @@ The re-summary is rapid, and can be repeated at regular intervals, taking the la
 * If any submissions `Criteria Provided` -> `1 stars`
 * Default -> `0 Stars`
 
-At this stage we have each allele with a new summary and star rating. The allele ID is matched up with the corresponding variant coordinates and ref/alt alleles from the variant summary file, then the whole object is persisted as a Hail Table, indexed on Locus and Alleles, ready to be used in annotation within Hail.
-
-## Clinvar Runner [clinvar_runner.py](../reanalysis/clinvar_runner.py)
-
-The script [clinvar_runner.py](../reanalysis/clinvar_runner.py) automates the regeneration of the re-summarised ClinVar data table, as well as the PM5 annotations as described in[Hail_Filter_and_Label.md](Hail_Filter_and_Label.md#usp). This sets up a workflow which is designed to run independently of an AIP run, generating and saving all the annotation sources:
+At this stage we have each allele with a summary and star rating. The allele ID is matched up with the corresponding variant coordinates and ref/alt alleles from the variant summary file, then the whole object is written in multiple forms: as a Hail Table, indexed on Locus and Alleles, ready to be used in annotation within Hail; as a JSON file containing one dictionary per line, each representing one new entry; as a VCF containing all Pathogenic-rated SNVs (for use in the subsequent PM5 ACMG criteria step).
 
 * Summarise
 
