@@ -20,7 +20,6 @@ from cyvcf2 import VCF, Variant
 
 import hail as hl
 
-
 """
 Takes a VCF of annotated Pathogenic Clinvar Variants
 re-indexes the data to be queryable on Transcript and Codon
@@ -50,7 +49,8 @@ def pull_vep_from_header(vcf: VCF) -> list[str]:
 
 
 def variant_consequences(
-    variant: Variant, csq_header: list[str],
+    variant: Variant,
+    csq_header: list[str],
 ) -> list[dict[str, str]]:
     """
     extracts the consequences for each transcript in this variant

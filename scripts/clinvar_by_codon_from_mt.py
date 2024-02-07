@@ -13,7 +13,6 @@ from argparse import ArgumentParser
 
 import hail as hl
 
-
 parser = ArgumentParser()
 parser.add_argument('-i', help='Path to the annotated MatrixTable')
 parser.add_argument('-o', help='Path to export PM5 table')
