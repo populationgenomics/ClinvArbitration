@@ -403,8 +403,8 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     processes that line into a table based on the schema
 
     Args:
-        json_path (): path to the JSON file (temp)
-        out_path (): where to write the Hail table
+        json_path (str): path to the JSON file (temp)
+        out_path (str): where to write the Hail table
 
     Returns:
         the Hail Table object created
@@ -431,11 +431,11 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     ht = hl.import_table(json_path, no_header=True, types={'f0': schema})
     ht = ht.transmute(**ht.f0)
 
-    # create a locus and key
+    # create a locus value, and key the table by this
     ht = ht.transmute(locus=hl.locus(ht.contig, ht.position))
     ht = ht.key_by(ht.locus, ht.alleles)
 
-    # write out
+    # write out to the specified location
     ht.write(f'{out_path}.ht', overwrite=True)
     return ht
 
@@ -457,16 +457,18 @@ def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
     clinvar_table = clinvar_table.filter(
         (hl.len(clinvar_table.alleles[0]) == 1)
         & (hl.len(clinvar_table.alleles[1]) == 1)
-        & (clinvar_table.clinical_significance == 'Pathogenic'),
+        & (clinvar_table.clinical_significance == Consequence.PATHOGENIC.value),
     )
 
-    # persist the clinvar annotations in VCF
+    # persist the clinvar annotations in an INFO field
     clinvar_table = clinvar_table.annotate(
         info=hl.struct(
             allele_id=clinvar_table.allele_id,
             gold_stars=clinvar_table.gold_stars,
         ),
     )
+
+    # export this data in VCF format
     vcf_path = f'{output_root}.vcf.bgz'
     hl.export_vcf(clinvar_table, vcf_path, tabix=True)
     logging.info(f'Wrote SNV VCF to {vcf_path}')
@@ -539,7 +541,7 @@ def main(subs: str, variants: str, output_root: str):
     ht = parse_into_table(json_path=json_output, out_path=output_root)
 
     logging.info('Writing out SNV VCF')
-    snv_missense_filter(ht, output_root)  # todo needs whatever
+    snv_missense_filter(ht, output_root)
 
 
 if __name__ == '__main__':

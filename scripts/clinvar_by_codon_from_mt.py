@@ -22,7 +22,10 @@ args = parser.parse_args()
 """
 Takes a MatrixTable of annotated Pathogenic Clinvar Variants
 re-indexes the data to be queryable on Transcript and Codon
-writes the resulting Table to the specified path
+writes the resulting Table to the specified path.
+
+The input for this process would be generated from running Hail's VEP
+methods on the 
 """
 
 hl.init(default_reference='GRCh38')
