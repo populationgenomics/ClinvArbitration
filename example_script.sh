@@ -19,7 +19,8 @@ docker run --platform linux/amd64 -v "$(pwd)/data":/data hail_clinvar:example \
 
 # upon completion, this will have generated files in the data directory:
 # - data/clinvar_summary.json - a JSON file containing the summarised data entries, one json object per line
-# - data/clinvar_summary.vcf.bgz - a bgzipped file containing the summarised data entries in VCF format
+# - data/clinvar_summary_for_VEP.vcf.bgz - a bgzipped VCF which can be used in VEP annotation
+# - data/clinvar_summary.vcf.bgz - a bgzipped file containing the pathogenic SNV entries in VCF format
 # - data/clinvar_summary.ht - a Hail Table containing the summarised data entries
 
 # This is where you should run VEP on data/clinvar_summary.vcf.bgz, with protein consequence annotation per transcript

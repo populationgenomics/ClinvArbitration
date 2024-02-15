@@ -440,6 +440,30 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     return ht
 
 
+def write_vep_vcf(clinvar_table: hl.Table, output_root: str):
+    """
+    takes a clinvar table and writes all contents as a VCF file
+
+    Args:
+        clinvar_table (hl.Table): the table of re-summarised clinvar loci
+        output_root (str): Path to write files to
+    """
+
+    # persist the relevant clinvar annotations in INFO
+    clinvar_table = clinvar_table.transmute(
+        info=hl.struct(
+            allele_id=clinvar_table.allele_id,
+            gold_stars=clinvar_table.gold_stars,
+            clinical_significance=clinvar_table.clinical_significance,
+        ),
+    )
+
+    # export this data in VCF format
+    vcf_path = f'{output_root}_for_VEP.vcf.bgz'
+    hl.export_vcf(clinvar_table, vcf_path, tabix=True)
+    logging.info(f'Wrote VCF to {vcf_path}')
+
+
 def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
     """
     takes a clinvar table and a filters to SNV & Pathogenic
@@ -540,7 +564,11 @@ def main(subs: str, variants: str, output_root: str):
 
     ht = parse_into_table(json_path=json_output, out_path=output_root)
 
-    logging.info('Writing out SNV VCF')
+    # export this table of decisions as a tabix-indexed VCF
+    logging.info('Writing out all entries as a VCF')
+    write_vep_vcf(ht, output_root)
+
+    logging.info('Writing out Pathogenic SNV VCF')
     snv_missense_filter(ht, output_root)
 
 
