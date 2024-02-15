@@ -1,6 +1,6 @@
 # Clinvar Re-Processing
 
-## Context
+## context
 
 ClinVar is valuable resource in identifying known Pathogenic & Benign variants within a genomic dataset. By aggregating evidence from a range of submitters, we can utilise the crowdsourced information to annotate current data with established clinical relevance.
 
@@ -17,17 +17,16 @@ The role of AIP is not to make clinical decisions, but to identify variants of i
 * Defers to submissions after mainstream acceptance of ACMG criteria (estimated start 2016), aiming to prioritise variants which have been reviewed in light of the latest clinical guidelines
 * Performs a more decisive summary, preferring a decision towards Pathogenic/Benign instead of defaulting any disagreements as `conflicting`
 
-## Process
+## process
 
 The re-summary is rapid, and can be repeated at regular intervals, taking the latest available clinvar submissions each time it runs. The files used are the `submission_summary`and `variant_summary` present on [the NCBI clinvar FTP site](https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/). We bin submissions into few discrete categories, a subset of those offered in the original ClinVar data: Benign, Conflicting, Pathogenic, Uncertain/VUS, and Unknown.
 
 1. Iterate over all individual submissions, removing any from blacklisted providers. Collect all retained submissions per-allele.
-2. For each allele, if any retained submissions were last edited after 2015 (representative ACMG date), reduce
-   submissions to only those. If no subs are from after 2015, retain all.
+2. For each allele, if any retained submissions were last edited after 2015 (representative ACMG date), reduce submissions to only those. If no subs are from after 2015, retain all.
 3. Find a summary 'rating' across all alleles, checking these scenarios until a match is found:
 
    * If an Expert Review/Clinical Guideline submission is present - choose that rating.
-   * If both Pathogenic and Benign submissions are present, check for a confident majority (>= 60% in majority, <= 20% in minority). If there is a clear majority, choose that as the overall rating.
+   * If both Pathogenic and Benign submissions are present, check for a confident majority (default values: >= 60% in majority, <= 20% in minority). If there is a clear majority, choose as the overall rating.
    * If both Pathogenic and Benign subs are present, but no clear majority, assign `Conflicting`.
    * If over half of submissions at the allele are `Uncertain`, rate as `Uncertain`.
    * If any Pathogenic submissions, take `Pathogenic`
@@ -46,7 +45,7 @@ At this stage we have each allele with a summary and star rating. The allele ID 
 * Summarise
 
   * Retrieve the Submission and Variant files from NCBI's ClinVar FTP server. This is not done in code, but a bash script is provided with an example
-  * Re-summarise all submissions, saving the results as a JSON file
+  * Re-summarise all submissions, saving the results as a JSON file & a Hail Table
   * Filter the Table to all Pathogenic SNVs, and export the result as a VCF
   * Hail is used here as an intermediary to generate the VCF, but the process is not dependent on Hail and could be replaced with any other VCF generation tool. The VCF is used as an input to the next step, whilst the Hail Table would be available as a locus-indexed annotation source for a Hail bioinformatics pipeline.
 
