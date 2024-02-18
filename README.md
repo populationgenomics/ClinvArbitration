@@ -19,7 +19,7 @@ This currently generates a few key outputs:
 * VCF of all revised decisions; this can be used as a custom annotation source in VEP
 * VCF of all Pathogenic-SNVs, for annotation & feeding into the second stage; ACMG criteria PM5 analysis
 
-[this script](example_script.sh) shows the steps involved in generating the data indicated above. The VCF form can be used as a custom annotation source in VEP. See this syntax relating to syntax available in VEP >= 110:
+[this script](example_script.sh) shows the steps involved in generating the data indicated above. The VCF form can be used as a custom annotation source in VEP. See this syntax available in VEP >= 110:
 
 ```
 ./vep [...] --custom file=clinvar_for_VEP.vcf.gz,short_name=CPG_ClinVar,format=vcf,type=exact,coords=0,fields=allele_id%gold_stars%clinical_significance
