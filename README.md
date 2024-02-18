@@ -6,7 +6,7 @@ During the creation of the [Automated Interpretation Pipeline (AIP)](https://www
 
 ## content
 
-This repository contains an alternative algorithm ([described here](docs/algorithm.md)) for re-visiting the ClinVar default results, generating alternative decisions which tend towards clear assignment of pathogenic/benign ratings. These ratings are not intended as a replacement of ClinVar's own decisions, but may provide value in situations where an analyst would benefit from knowing that although conflicting submissions exist, there is a bias towards either benign or pathogenic ratings.
+This repository contains an alternative algorithm ([described here](docs/algorithm.md)) for re-visiting the ClinVar default results, generating alternative decisions which tend towards clear assignment of pathogenic/benign ratings. These ratings are not intended as a replacement of ClinVar's own decisions, but may provide value in situations where an analyst would benefit from seeing that though conflicting submissions exist, there is a bias towards either benign or pathogenic ratings.
 
 ## outputs
 
@@ -31,6 +31,6 @@ This currently generates a few key outputs:
 
 ---
 
-At CPG we leverage Hail, a python-based analysis framework which leverages Apache Spark to perform distributed computation. This repository contains a number of scripts which are designed to be run using Hail, and can either be executed once hail is installed, or using a public Hail Docker image, sourced from [DockerHub](https://hub.docker.com/r/hailgenetics/hail/tags). A Dockerfile included in this repository will build a custom image capable of locally executing all scripts.
+At CPG we leverage Hail, a python-based analysis framework which leverages Apache Spark to perform distributed computation. This repository contains a number of scripts which were initially designed to be run using Hail, and can either be executed once hail is installed, or using a public Hail Docker image, sourced from [DockerHub](https://hub.docker.com/r/hailgenetics/hail/tags). A Dockerfile included in this repository will build a custom image capable of locally executing all scripts.
 
 Our aim with this repository is to carry out a periodic reprocessing of ClinVar data, and to make the results available to the wider community in a range of formats. We hope that this will be useful to others who are working with ClinVar data, and that it will be a useful resource for those who are working on similar projects.
