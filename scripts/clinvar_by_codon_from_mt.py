@@ -32,8 +32,10 @@ The input for this process would be generated from running Hail's VEP
 methods on the 
 """
 
+
 hl.init(default_reference='GRCh38')
 
+# read in the MT containing the pathogenic SNVs + annotation
 vep_clinvar = hl.read_matrix_table(args.i)
 
 # 1. retain only relevant annotations
