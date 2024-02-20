@@ -10,7 +10,7 @@ This repository contains an alternative algorithm ([described here](docs/algorit
 
 ## outputs
 
-Our intention with this repository is to make this code and process available, as well as periodically producing releases containing the resulting data files for consumption in other analyses. 
+Our intention with this repository is to make this code and process available, as well as periodically producing releases containing the resulting data files for consumption in other analyses.
 
 This currently generates a few key outputs:
 
@@ -21,13 +21,13 @@ This currently generates a few key outputs:
 
 [this script](example_script.sh) shows the steps involved in generating the data indicated above. The VCF form can be used as a custom annotation source in VEP. See this syntax available in VEP >= 110:
 
-```
+```bash
 ./vep [...] --custom file=clinvar_for_VEP.vcf.gz,short_name=CPG_ClinVar,format=vcf,type=exact,coords=0,fields=allele_id%gold_stars%clinical_significance
 ```
 
 ## acknowledgements
 
-...
+* [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/, for providing the data which this process is based on
 
 ---
 

@@ -16,7 +16,6 @@ from argparse import ArgumentParser
 
 import hail as hl
 
-
 parser = ArgumentParser()
 parser.add_argument('-i', help='Path to the annotated MatrixTable')
 parser.add_argument('-o', help='Path to export PM5 table')
@@ -29,7 +28,7 @@ re-indexes the data to be queryable on Transcript and Codon
 writes the resulting Table to the specified path.
 
 The input for this process would be generated from running Hail's VEP
-methods on the 
+methods on the
 """
 
 
