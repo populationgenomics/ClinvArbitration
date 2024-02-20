@@ -27,7 +27,7 @@ This currently generates a few key outputs:
 
 ## acknowledgements
 
-* [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/, for providing the data which this process is based on
+* [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar), for providing the data which this process is based on
 
 ---
 
