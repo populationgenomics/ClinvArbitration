@@ -260,9 +260,9 @@ def check_stars(subs: list[Submission]) -> int:
     for sub in subs:
         if sub.review_status == 'practice guideline':
             return 4
-        elif sub.review_status == 'reviewed by expert panel':
+        if sub.review_status == 'reviewed by expert panel':
             return 3
-        elif sub.review_status not in NO_STAR_RATINGS:
+        if sub.review_status not in NO_STAR_RATINGS:
             minimum = 1
 
     return minimum
@@ -426,7 +426,7 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     hl.init(default_reference='GRCh38')
 
     # # may need this as a subsequent line, depending on the Hail version being used
-    # hl.default_reference(hl.get_reference('GRCh38'))
+    # hl.default_reference(hl.get_reference('GRCh38'))  # noqa: ERA001
 
     # define the schema for each written line
     schema = hl.dtype(

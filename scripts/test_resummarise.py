@@ -3,14 +3,14 @@ from copy import deepcopy
 from datetime import datetime
 
 import pytest
-from resummarise import Consequence, Submission, check_stars, consequence_decision
+from resummarise import Consequence, Submission, consequence_decision
 
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
 BASIC_SUB = Submission(datetime.now(tz=TIMEZONE), 'foo', Consequence.UNKNOWN, 'review')
 
 
 @pytest.mark.parametrize(
-    'consequences,expected',
+    ('consequences', 'expected'),
     [
         ([Consequence.PATHOGENIC], Consequence.PATHOGENIC),
         ([Consequence.PATHOGENIC, Consequence.PATHOGENIC], Consequence.PATHOGENIC),
