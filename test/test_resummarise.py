@@ -3,7 +3,8 @@ from copy import deepcopy
 from datetime import datetime
 
 import pytest
-from resummarise import Consequence, Submission, consequence_decision
+
+from clinvarbitration.resummarise import Consequence, Submission, consequence_decision
 
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
 BASIC_SUB = Submission(datetime.now(tz=TIMEZONE), 'foo', Consequence.UNKNOWN, 'review')
