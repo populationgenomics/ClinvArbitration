@@ -42,12 +42,18 @@ PATH_SIGS = {
     'Pathogenic/Likely pathogenic',
 }
 UNCERTAIN_SIGS = {'Uncertain significance', 'Uncertain risk allele'}
-USELESS_RATINGS = {'no assertion criteria provided'}
 
-MAJORITY_RATIO = 0.6
-MINORITY_RATIO = 0.2
-STRONG_REVIEWS = ['practice guideline', 'reviewed by expert panel']
-ORDERED_ALLELES = [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM']
+NO_STAR_RATINGS: set[str] = {'no assertion criteria provided'}
+USELESS_RATINGS: set[str] = set()
+
+MAJORITY_RATIO: float = 0.6
+MINORITY_RATIO: float = 0.2
+STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
+ORDERED_ALLELES: list[str] = [f'chr{x}' for x in list(range(1, 23))] + [
+    'chrX',
+    'chrY',
+    'chrM',
+]
 
 # I really want the linter to just naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
@@ -120,6 +126,7 @@ def get_allele_locus_map(summary_file: str) -> dict:
         allele_id = int(line[0])
         chromosome = line[18] if 'chr' in line[18] else f'chr{line[18]}'
         var_id = int(line[30])
+        uniq_var_id = f'{chromosome}_{line[30]}'
         pos = int(line[31])
         ref = line[32]
         alt = line[33]
@@ -136,7 +143,8 @@ def get_allele_locus_map(summary_file: str) -> dict:
 
         # don't include any of the trash bases in ClinVar
         if BASES.match(ref) and BASES.match(alt):
-            allele_dict[var_id] = {
+            allele_dict[uniq_var_id] = {
+                'var_id': var_id,
                 'allele': allele_id,
                 'chrom': chromosome,
                 'pos': pos,
@@ -238,6 +246,10 @@ def check_stars(subs: list[Submission]) -> int:
     processes the submissions, and assigns a 'gold star' rating
     this is a subset of the full ClinVar star system
 
+    The NO_STAR_RATINGS set is ratings which we don't ascribe any
+    star rating to, otherwise everything has a floor of 1, with
+    an exit for 3 or 4 stars, for those superior review statuses
+
     Args:
         subs (): list of all submissions at this allele
 
@@ -250,7 +262,7 @@ def check_stars(subs: list[Submission]) -> int:
             return 4
         if sub.review_status == 'reviewed by expert panel':
             return 3
-        if 'criteria provided' in sub.review_status:
+        if sub.review_status not in NO_STAR_RATINGS:
             minimum = 1
 
     return minimum
@@ -306,7 +318,7 @@ def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
 
 def get_all_decisions(
     submission_file: str,
-    allele_ids: set,
+    allele_ids: set[int],
 ) -> dict[int, list[Submission]]:
     """
     obtains all submissions per-allele which pass basic criteria
@@ -411,8 +423,10 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     """
 
     # start a hail runtime
-    hl.init()
-    hl.default_reference(hl.get_reference('GRCh38'))
+    hl.init(default_reference='GRCh38')
+
+    # # may need this as a subsequent line, depending on the Hail version being used
+    # hl.default_reference(hl.get_reference('GRCh38'))  # noqa: ERA001
 
     # define the schema for each written line
     schema = hl.dtype(
@@ -420,7 +434,6 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
         'alleles:array<str>,'
         'contig:str,'
         'position:int32,'
-        'id:int32,'
         'clinical_significance:str,'
         'gold_stars:int32,'
         'allele_id:int32'
@@ -512,13 +525,12 @@ def main(subs: str, variants: str, output_root: str):
     allele_map = get_allele_locus_map(variants)
 
     logging.info('Getting all decisions, indexed on clinvar AlleleID')
-    decision_dict = get_all_decisions(
-        submission_file=subs,
-        allele_ids=set(allele_map.keys()),
-    )
+    # the raw IDs - some have ambiguous X/Y mappings
+    all_uniq_ids = {x['var_id'] for x in allele_map.values()}
+    decision_dict = get_all_decisions(submission_file=subs, allele_ids=all_uniq_ids)
 
     # placeholder to fill wth per-allele decisions
-    all_decisions = []
+    all_decisions = {}
 
     # now filter each set of decisions per allele
     for allele_id, submissions in decision_dict.items():
@@ -538,28 +550,40 @@ def main(subs: str, variants: str, output_root: str):
         if rating in [Consequence.UNCERTAIN, Consequence.UNKNOWN]:
             continue
 
-        all_decisions.append(
+        all_decisions[allele_id] = (rating, stars)
+
+    # now match those up with the variant coordinates
+    complete_decisions = []
+    for var_details in allele_map.values():
+        var_id = var_details['var_id']
+
+        # we may have found no relevant submissions for this variant
+        if var_id not in all_decisions:
+            continue
+
+        # add the decision to the list, inc. variant details
+        complete_decisions.append(
             {
-                'alleles': [allele_map[allele_id]['ref'], allele_map[allele_id]['alt']],
-                'contig': allele_map[allele_id]['chrom'],
-                'position': allele_map[allele_id]['pos'],
-                'id': allele_id,
-                'clinical_significance': rating.value,
-                'gold_stars': stars,
-                'allele_id': allele_map[allele_id]['allele'],
+                'alleles': [var_details['ref'], var_details['alt']],
+                'contig': var_details['chrom'],
+                'position': var_details['pos'],
+                'clinical_significance': all_decisions[var_id][0].value,
+                'gold_stars': all_decisions[var_details['var_id']][1],
+                'allele_id': var_id,
             },
         )
 
     # sort all collected decisions, trying to reduce overhead in HT later
-    all_decisions = sort_decisions(all_decisions)
+    complete_decisions_sorted = sort_decisions(complete_decisions)
 
     # write out the JSON version of these results
     json_output = f'{output_root}.json'
     logging.info(f'temp JSON location: {json_output}')
 
     # open this temp path and write the json contents, line by line
+    # the HT generation will take the file path, not a list of dictionaries
     with open(json_output, 'w', encoding='utf-8') as handle:
-        for each_dict in all_decisions:
+        for each_dict in complete_decisions_sorted:
             handle.write(f'{json.dumps(each_dict)}\n')
 
     ht = parse_into_table(json_path=json_output, out_path=output_root)
