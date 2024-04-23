@@ -55,7 +55,7 @@ ORDERED_ALLELES: list[str] = [f'chr{x}' for x in list(range(1, 23))] + [
     'chrM',
 ]
 
-# I really want the linter to just naive datetimes, but it won't
+# I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
 # published Nov 2015, available pre-print since March 2015
 # assumed to be influential since 2016
@@ -213,12 +213,8 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
             counts[each_sub.classification] += 1
 
     if counts[Consequence.PATHOGENIC] and counts[Consequence.BENIGN]:
-        if (
-            max(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN])
-            >= (counts['total'] * MAJORITY_RATIO)
-        ) and (
-            min(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN])
-            <= (counts['total'] * MINORITY_RATIO)
+        if (max(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN]) >= (counts['total'] * MAJORITY_RATIO)) and (
+            min(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN]) <= (counts['total'] * MINORITY_RATIO)
         ):
             decision = (
                 Consequence.BENIGN
@@ -291,11 +287,7 @@ def process_line(data: list[str]) -> tuple[int, Submission]:
         classification = Consequence.UNCERTAIN
     else:
         classification = Consequence.UNKNOWN
-    date = (
-        datetime.strptime(data[2], '%b %d, %Y').replace(tzinfo=TIMEZONE)
-        if data[2] != '-'
-        else VERY_OLD
-    )
+    date = datetime.strptime(data[2], '%b %d, %Y').replace(tzinfo=TIMEZONE) if data[2] != '-' else VERY_OLD
     sub = data[9].lower()
     rev_status = data[6].lower()
 
@@ -354,10 +346,7 @@ def get_all_decisions(
 
         # screen out some submitters per-consequence
         for consequence, submitters in QUALIFIED_BLACKLIST:
-            if (
-                line_sub.classification == consequence
-                and line_sub.submitter in submitters
-            ):
+            if line_sub.classification == consequence and line_sub.submitter in submitters:
                 continue
 
         submission_dict[a_id].append(line_sub)
@@ -385,11 +374,7 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
     """
 
     # apply the date threshold to all submissions
-    date_filt_subs = [
-        sub
-        for sub in subs
-        if sub.date >= ACMG_THRESHOLD or sub.review_status in STRONG_REVIEWS
-    ]
+    date_filt_subs = [sub for sub in subs if sub.date >= ACMG_THRESHOLD or sub.review_status in STRONG_REVIEWS]
 
     # if this contains results, return only those
     # default to returning everything
