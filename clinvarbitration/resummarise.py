@@ -20,7 +20,6 @@ import gzip
 import json
 import logging
 import re
-import zoneinfo
 from argparse import ArgumentParser
 from collections import defaultdict
 from collections.abc import Generator
@@ -28,9 +27,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
-import pandas as pd
-
 import hail as hl
+import pandas as pd
+import zoneinfo
 
 BENIGN_SIGS = {'Benign', 'Likely benign', 'Benign/Likely benign', 'protective'}
 CONFLICTING = 'conflicting data from submitters'
@@ -49,13 +48,9 @@ USELESS_RATINGS: set[str] = set()
 MAJORITY_RATIO: float = 0.6
 MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
-ORDERED_ALLELES: list[str] = [f'chr{x}' for x in list(range(1, 23))] + [
-    'chrX',
-    'chrY',
-    'chrM',
-]
+ORDERED_ALLELES: list[str] = [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM']
 
-# I really want the linter to just naive datetimes, but it won't
+# I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
 # published Nov 2015, available pre-print since March 2015
 # assumed to be influential since 2016
@@ -130,6 +125,10 @@ def get_allele_locus_map(summary_file: str) -> dict:
         pos = int(line[31])
         ref = line[32]
         alt = line[33]
+
+        # skip non-standard chromosomes
+        if chromosome not in ORDERED_ALLELES:
+            continue
 
         # skip chromosomal deletions and insertions, mito, or massive indels
         if (
@@ -209,12 +208,8 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
             counts[each_sub.classification] += 1
 
     if counts[Consequence.PATHOGENIC] and counts[Consequence.BENIGN]:
-        if (
-            max(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN])
-            >= (counts['total'] * MAJORITY_RATIO)
-        ) and (
-            min(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN])
-            <= (counts['total'] * MINORITY_RATIO)
+        if (max(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN]) >= (counts['total'] * MAJORITY_RATIO)) and (
+            min(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN]) <= (counts['total'] * MINORITY_RATIO)
         ):
             decision = (
                 Consequence.BENIGN
@@ -287,11 +282,7 @@ def process_line(data: list[str]) -> tuple[int, Submission]:
         classification = Consequence.UNCERTAIN
     else:
         classification = Consequence.UNKNOWN
-    date = (
-        datetime.strptime(data[2], '%b %d, %Y').replace(tzinfo=TIMEZONE)
-        if data[2] != '-'
-        else VERY_OLD
-    )
+    date = datetime.strptime(data[2], '%b %d, %Y').replace(tzinfo=TIMEZONE) if data[2] != '-' else VERY_OLD
     sub = data[9].lower()
     rev_status = data[6].lower()
 
@@ -316,10 +307,7 @@ def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
     return hl.Table.from_pandas(pdf, key=['locus', 'alleles'])
 
 
-def get_all_decisions(
-    submission_file: str,
-    allele_ids: set[int],
-) -> dict[int, list[Submission]]:
+def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, list[Submission]]:
     """
     obtains all submissions per-allele which pass basic criteria
         - not a blacklisted submitter
@@ -350,10 +338,7 @@ def get_all_decisions(
 
         # screen out some submitters per-consequence
         for consequence, submitters in QUALIFIED_BLACKLIST:
-            if (
-                line_sub.classification == consequence
-                and line_sub.submitter in submitters
-            ):
+            if line_sub.classification == consequence and line_sub.submitter in submitters:
                 continue
 
         submission_dict[a_id].append(line_sub)
@@ -381,11 +366,7 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
     """
 
     # apply the date threshold to all submissions
-    date_filt_subs = [
-        sub
-        for sub in subs
-        if sub.date >= ACMG_THRESHOLD or sub.review_status in STRONG_REVIEWS
-    ]
+    date_filt_subs = [sub for sub in subs if sub.date >= ACMG_THRESHOLD or sub.review_status in STRONG_REVIEWS]
 
     # if this contains results, return only those
     # default to returning everything
@@ -403,10 +384,7 @@ def sort_decisions(all_subs: list[dict]) -> list[dict]:
         a list of submissions, sorted hierarchically on chr & pos
     """
 
-    return sorted(
-        all_subs,
-        key=lambda x: (ORDERED_ALLELES.index(x['contig']), x['position']),
-    )
+    return sorted(all_subs, key=lambda x: (ORDERED_ALLELES.index(x['contig']), x['position']))
 
 
 def parse_into_table(json_path: str, out_path: str) -> hl.Table:
@@ -499,10 +477,7 @@ def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
 
     # persist the clinvar annotations in an INFO field
     clinvar_table = clinvar_table.annotate(
-        info=hl.struct(
-            allele_id=clinvar_table.allele_id,
-            gold_stars=clinvar_table.gold_stars,
-        ),
+        info=hl.struct(allele_id=clinvar_table.allele_id, gold_stars=clinvar_table.gold_stars),
     )
 
     # export this data in VCF format
@@ -602,11 +577,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-s', help='submission_summary.txt.gz from NCBI', required=True)
     parser.add_argument('-v', help='variant_summary.txt.gz from NCBI', required=True)
-    parser.add_argument(
-        '-o',
-        help='output root, for table, json, and pathogenic-variants-only VCF',
-        required=True,
-    )
+    parser.add_argument('-o', help='output root, for table, json, and pathogenic-variants-only VCF', required=True)
     args = parser.parse_args()
 
     main(subs=args.s, variants=args.v, output_root=args.o)

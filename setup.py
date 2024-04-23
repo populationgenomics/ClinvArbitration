@@ -2,7 +2,6 @@
 automated installation instructions
 """
 
-
 from setuptools import find_packages, setup
 
 with open('README.md', encoding='utf-8') as handle:
@@ -20,11 +19,7 @@ def read_reqs(filename: str) -> list[str]:
         list[str]: the requirements
     """
     with open(filename, encoding='utf-8') as filehandler:
-        return [
-            line.strip()
-            for line in filehandler
-            if line.strip() and not line.startswith('#')
-        ]
+        return [line.strip() for line in filehandler if line.strip() and not line.startswith('#')]
 
 
 setup(
@@ -33,10 +28,7 @@ setup(
     long_description=readme,
     version='1.0.0',
     author='Matthew Welland, CPG',
-    author_email=(
-        'matthew.welland@populationgenomics.org.au, '
-        'cas.simons@populationgenomics.org.au'
-    ),
+    author_email=('matthew.welland@populationgenomics.org.au, ' 'cas.simons@populationgenomics.org.au'),
     url='https://github.com/populationgenomics/ClinvArbitration',
     license='MIT',
     classifiers=[
