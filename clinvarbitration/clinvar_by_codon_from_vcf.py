@@ -16,9 +16,8 @@ import json
 from argparse import ArgumentParser
 from collections import defaultdict
 
-from cyvcf2 import VCF, Variant
-
 import hail as hl
+from cyvcf2 import VCF, Variant
 
 """
 Takes a VCF of annotated Pathogenic Clinvar Variants

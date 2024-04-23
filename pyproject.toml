@@ -3,9 +3,7 @@ line-length = 120
 skip-string-normalization = true
 exclude = '''
 /(
-  seqr-loading-pipelines
-  | gnomad_methods
-  | venv
+  venv
   | \.mypy_cache
   | \.tox
   | \.venv
@@ -18,16 +16,12 @@ exclude = '''
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-pythonpath = ['gnomad_methods', 'seqr-loading-pipelines']
 testpaths = ['test']
-
 
 [tool.ruff]
 line-length = 120
 
 extend-exclude = [
-    "gnomad_methods",
-    "seqr-loading-pipelines",
     "venv",
     ".mypy_cache",
     ".tox",
@@ -186,20 +180,4 @@ ignore = [
 
 [tool.ruff.lint.isort]
 
-section-order = ["future", "standard-library", "third-party", "hail", "cpg", "first-party", "local-folder"]
-
-[tool.ruff.lint.isort.sections]
-hail = [
-    "hail",
-    "hailtop",
-]
-
-cpg = [
-    "analysis_runner",
-    "cpg_infra",
-    "cpg_utils",
-    "cpg_workflows",
-    "gnomad",
-    "hail_scripts",
-    "metamist",
-]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]

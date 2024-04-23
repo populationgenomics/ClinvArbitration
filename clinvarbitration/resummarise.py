@@ -20,7 +20,6 @@ import gzip
 import json
 import logging
 import re
-import zoneinfo
 from argparse import ArgumentParser
 from collections import defaultdict
 from collections.abc import Generator
@@ -28,9 +27,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
-import pandas as pd
-
 import hail as hl
+import pandas as pd
+import zoneinfo
 
 BENIGN_SIGS = {'Benign', 'Likely benign', 'Benign/Likely benign', 'protective'}
 CONFLICTING = 'conflicting data from submitters'
