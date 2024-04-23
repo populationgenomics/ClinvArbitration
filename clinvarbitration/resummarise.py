@@ -48,11 +48,7 @@ USELESS_RATINGS: set[str] = set()
 MAJORITY_RATIO: float = 0.6
 MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
-ORDERED_ALLELES: list[str] = [f'chr{x}' for x in list(range(1, 23))] + [
-    'chrX',
-    'chrY',
-    'chrM',
-]
+ORDERED_ALLELES: list[str] = [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM']
 
 # I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
@@ -311,10 +307,7 @@ def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
     return hl.Table.from_pandas(pdf, key=['locus', 'alleles'])
 
 
-def get_all_decisions(
-    submission_file: str,
-    allele_ids: set[int],
-) -> dict[int, list[Submission]]:
+def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, list[Submission]]:
     """
     obtains all submissions per-allele which pass basic criteria
         - not a blacklisted submitter
@@ -391,10 +384,7 @@ def sort_decisions(all_subs: list[dict]) -> list[dict]:
         a list of submissions, sorted hierarchically on chr & pos
     """
 
-    return sorted(
-        all_subs,
-        key=lambda x: (ORDERED_ALLELES.index(x['contig']), x['position']),
-    )
+    return sorted(all_subs, key=lambda x: (ORDERED_ALLELES.index(x['contig']), x['position']))
 
 
 def parse_into_table(json_path: str, out_path: str) -> hl.Table:
@@ -487,10 +477,7 @@ def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
 
     # persist the clinvar annotations in an INFO field
     clinvar_table = clinvar_table.annotate(
-        info=hl.struct(
-            allele_id=clinvar_table.allele_id,
-            gold_stars=clinvar_table.gold_stars,
-        ),
+        info=hl.struct(allele_id=clinvar_table.allele_id, gold_stars=clinvar_table.gold_stars),
     )
 
     # export this data in VCF format
@@ -590,11 +577,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-s', help='submission_summary.txt.gz from NCBI', required=True)
     parser.add_argument('-v', help='variant_summary.txt.gz from NCBI', required=True)
-    parser.add_argument(
-        '-o',
-        help='output root, for table, json, and pathogenic-variants-only VCF',
-        required=True,
-    )
+    parser.add_argument('-o', help='output root, for table, json, and pathogenic-variants-only VCF', required=True)
     args = parser.parse_args()
 
     main(subs=args.s, variants=args.v, output_root=args.o)
