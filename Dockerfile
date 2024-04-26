@@ -1,8 +1,8 @@
 FROM hailgenetics/hail:0.2.127-py3.11
 
-COPY scripts /scripts
-COPY requirements.txt /scripts/
+COPY clinvarbitration /clinvarbitration
+COPY requirements.txt /clinvarbitration/
 
-RUN pip install --no-cache-dir -r /scripts/requirements.txt
+RUN pip install --no-cache-dir -r /clinvarbitration/requirements.txt
 
-WORKDIR /scripts
+WORKDIR /clinvarbitration

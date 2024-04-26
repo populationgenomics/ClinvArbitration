@@ -263,7 +263,7 @@ def check_stars(subs: list[Submission]) -> int:
     return minimum
 
 
-def process_line(data: list[str]) -> tuple[int, Submission]:
+def process_submission_line(data: list[str]) -> tuple[int, Submission]:
     """
     takes a line, strips out useful content as a 'Submission'
 
@@ -273,7 +273,7 @@ def process_line(data: list[str]) -> tuple[int, Submission]:
     Returns:
         the allele ID and corresponding Submission details
     """
-    allele_id = int(data[0])
+    var_id = int(data[0])
     if data[1] in PATH_SIGS:
         classification = Consequence.PATHOGENIC
     elif data[1] in BENIGN_SIGS:
@@ -286,7 +286,7 @@ def process_line(data: list[str]) -> tuple[int, Submission]:
     sub = data[9].lower()
     rev_status = data[6].lower()
 
-    return allele_id, Submission(date, sub, classification, rev_status)
+    return var_id, Submission(date, sub, classification, rev_status)
 
 
 def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
@@ -307,7 +307,7 @@ def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
     return hl.Table.from_pandas(pdf, key=['locus', 'alleles'])
 
 
-def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, list[Submission]]:
+def get_all_decisions(submission_file: str, var_ids: set[int]) -> dict[int, list[Submission]]:
     """
     obtains all submissions per-allele which pass basic criteria
         - not a blacklisted submitter
@@ -315,21 +315,21 @@ def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, l
 
     Args:
         submission_file (): file containing submission-per-line
-        allele_ids (): only process alleleIDs we have pos data for
+        var_ids (): only process Var IDs we have pos data for
 
     Returns:
-        dictionary of alleles and their corresponding submissions
+        dictionary of var IDs and their corresponding submissions
     """
 
     submission_dict = defaultdict(list)
 
     for line in lines_from_gzip(submission_file):
-        a_id, line_sub = process_line(line)
+        var_id, line_sub = process_submission_line(line)
 
         # skip rows where the variantID isn't in this mapping
         # this saves a little effort on haplotypes, CNVs, and SVs
         if (
-            (a_id not in allele_ids)
+            (var_id not in var_ids)
             or (line_sub.submitter in BLACKLIST)
             or (line_sub.review_status in USELESS_RATINGS)
             or (line_sub.classification == Consequence.UNKNOWN)
@@ -341,7 +341,7 @@ def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, l
             if line_sub.classification == consequence and line_sub.submitter in submitters:
                 continue
 
-        submission_dict[a_id].append(line_sub)
+        submission_dict[var_id].append(line_sub)
 
     return submission_dict
 
@@ -499,16 +499,17 @@ def main(subs: str, variants: str, output_root: str):
     logging.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants)
 
-    logging.info('Getting all decisions, indexed on clinvar AlleleID')
+    logging.info('Getting all decisions, indexed on clinvar Var ID')
+
     # the raw IDs - some have ambiguous X/Y mappings
     all_uniq_ids = {x['var_id'] for x in allele_map.values()}
-    decision_dict = get_all_decisions(submission_file=subs, allele_ids=all_uniq_ids)
+    decision_dict = get_all_decisions(submission_file=subs, var_ids=all_uniq_ids)
 
     # placeholder to fill wth per-allele decisions
     all_decisions = {}
 
     # now filter each set of decisions per allele
-    for allele_id, submissions in decision_dict.items():
+    for var_id, submissions in decision_dict.items():
         # filter against ACMG date, if appropriate
         filtered_submissions = acmg_filter_submissions(submissions)
 
@@ -525,11 +526,12 @@ def main(subs: str, variants: str, output_root: str):
         if rating in [Consequence.UNCERTAIN, Consequence.UNKNOWN]:
             continue
 
-        all_decisions[allele_id] = (rating, stars)
+        all_decisions[var_id] = (rating, stars)
 
     # now match those up with the variant coordinates
+    logging.info('Matching decisions to variant coordinates')
     complete_decisions = []
-    for var_details in allele_map.values():
+    for uniq_var_id, var_details in allele_map.items():
         var_id = var_details['var_id']
 
         # we may have found no relevant submissions for this variant
@@ -544,7 +546,7 @@ def main(subs: str, variants: str, output_root: str):
                 'position': var_details['pos'],
                 'clinical_significance': all_decisions[var_id][0].value,
                 'gold_stars': all_decisions[var_details['var_id']][1],
-                'allele_id': var_id,
+                'allele_id': allele_map[uniq_var_id]['allele'],
             },
         )
 
