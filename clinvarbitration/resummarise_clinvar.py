@@ -487,7 +487,6 @@ def cli_main():
     # if sites are blacklisted on the CLI, update the global BLACKLIST value
     # temporary solution while we continue to validate Talos
     if args.b:
-        global BLACKLIST
         BLACKLIST.update(args.b)
 
     main(subs=args.s, variants=args.v, output_root=args.o, minimal=args.minimal)

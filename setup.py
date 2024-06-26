@@ -53,6 +53,6 @@ setup(
             'resummary = clinvarbitration.resummarise_clinvar:cli_main',
             # Step 2, post-annotation; obtain PM5 annotations from VEP annotated clinvar
             'pm5_table = clinvarbitration.clinvar_by_codon:cli_main',
-        ]
-    }
+        ],
+    },
 )
