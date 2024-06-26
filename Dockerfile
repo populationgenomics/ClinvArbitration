@@ -1,8 +1,22 @@
-FROM hailgenetics/hail:0.2.127-py3.11
+FROM python:3.10-bullseye
 
-COPY clinvarbitration /clinvarbitration
-COPY requirements.txt /clinvarbitration/
+RUN apt update && apt install -y \
+        apt-transport-https \
+        bzip2 \
+        ca-certificates \
+        git \
+        gnupg \
+        openjdk-11-jdk-headless \
+        wget \
+        zip && \
+    rm -r /var/lib/apt/lists/* && \
+    rm -r /var/cache/apt/*
 
-RUN pip install --no-cache-dir -r /clinvarbitration/requirements.txt
+COPY requirements*.txt .
 
-WORKDIR /clinvarbitration
+RUN pip install -r requirements.txt
+COPY README.md .
+COPY setup.py .
+COPY clinvarbitration clinvarbitration/
+
+RUN pip install --no-cache-dir .
