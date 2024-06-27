@@ -1,5 +1,8 @@
 FROM python:3.10-bullseye
 
+# take as a command line argument, or
+ARG RELEASE=${RELEASE:-1.1.0}
+
 RUN apt update && apt install -y \
         apt-transport-https \
         bzip2 \
@@ -12,11 +15,4 @@ RUN apt update && apt install -y \
     rm -r /var/lib/apt/lists/* && \
     rm -r /var/cache/apt/*
 
-COPY requirements*.txt .
-
-RUN pip install -r requirements.txt
-COPY README.md .
-COPY setup.py .
-COPY clinvarbitration clinvarbitration/
-
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir git+https://github.com/populationgenomics/automated-interpretation-pipeline.git@${RELEASE}

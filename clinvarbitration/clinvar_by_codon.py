@@ -116,3 +116,7 @@ def main(input_vcf: str, output_root: str):
     # write out
     ht.write(f'{output_root}.ht', overwrite=True)
     logging.info(f'Hail Table written to {output_root}.ht')
+
+
+if __name__ == '__main__':
+    cli_main()
