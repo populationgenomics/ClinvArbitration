@@ -475,7 +475,6 @@ def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
 
 def cli_main():
     logging.basicConfig(level=logging.INFO)
-
     parser = ArgumentParser()
     parser.add_argument('-s', help='submission_summary.txt.gz from NCBI', required=True)
     parser.add_argument('-v', help='variant_summary.txt.gz from NCBI', required=True)
