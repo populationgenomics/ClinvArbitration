@@ -15,4 +15,4 @@ RUN apt update && apt install -y \
     rm -r /var/lib/apt/lists/* && \
     rm -r /var/cache/apt/*
 
-RUN pip install --no-cache-dir git+https://github.com/populationgenomics/automated-interpretation-pipeline.git@${RELEASE}
+RUN pip install --no-cache-dir git+https://github.com/populationgenomics/ClinvArbitration.git@${RELEASE}
