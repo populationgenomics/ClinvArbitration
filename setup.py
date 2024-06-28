@@ -23,12 +23,12 @@ def read_reqs(filename: str) -> list[str]:
 
 
 setup(
-    name='ClinvArbitration',
+    name='clinvarbitration',
     description='CPG ClinVar Re-interpretation',
     long_description=readme,
-    version='1.0.0',
+    version='1.2.0',
     author='Matthew Welland, CPG',
-    author_email=('matthew.welland@populationgenomics.org.au, ' 'cas.simons@populationgenomics.org.au'),
+    author_email='matthew.welland@populationgenomics.org.au, cas.simons@populationgenomics.org.au',
     url='https://github.com/populationgenomics/ClinvArbitration',
     license='MIT',
     classifiers=[
@@ -46,7 +46,13 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=read_reqs('requirements.txt'),
-    extras_require={
-        'test': read_reqs('requirements-dev.txt'),
+    extras_require={'test': read_reqs('requirements-dev.txt')},
+    entry_points={
+        'console_scripts': [
+            # Step 1; re-summarise ClinVar using altered conflict resolution
+            'resummary = clinvarbitration.resummarise_clinvar:cli_main',
+            # Step 2, post-annotation; obtain PM5 annotations from VEP annotated clinvar
+            'pm5_table = clinvarbitration.clinvar_by_codon:cli_main',
+        ],
     },
 )

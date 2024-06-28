@@ -1,8 +1,18 @@
-FROM hailgenetics/hail:0.2.127-py3.11
+FROM python:3.10-bullseye
 
-COPY scripts /scripts
-COPY requirements.txt /scripts/
+# take as a command line argument, or
+ARG RELEASE=${RELEASE:-1.2.0}
 
-RUN pip install --no-cache-dir -r /scripts/requirements.txt
+RUN apt update && apt install -y \
+        apt-transport-https \
+        bzip2 \
+        ca-certificates \
+        git \
+        gnupg \
+        openjdk-11-jdk-headless \
+        wget \
+        zip && \
+    rm -r /var/lib/apt/lists/* && \
+    rm -r /var/cache/apt/*
 
-WORKDIR /scripts
+RUN pip install --no-cache-dir git+https://github.com/populationgenomics/ClinvArbitration.git@${RELEASE}

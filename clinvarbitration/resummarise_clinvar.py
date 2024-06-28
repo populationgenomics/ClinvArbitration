@@ -52,16 +52,19 @@ ORDERED_ALLELES: list[str] = [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 
 
 # I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
+
 # published Nov 2015, available pre-print since March 2015
 # assumed to be influential since 2016
-
 ACMG_THRESHOLD = datetime(year=2016, month=1, day=1, tzinfo=TIMEZONE)
+
+# a default date assigned to un-dated entries
 VERY_OLD = datetime(year=1970, month=1, day=1, tzinfo=TIMEZONE)
+
 LARGEST_COMPLEX_INDELS = 40
 BASES = re.compile(r'[ACGTN]+')
 
 # add the exact name of any submitters whose evidence is not trusted
-BLACKLIST: list[str] = []
+BLACKLIST: set[str] = set()
 
 
 class Consequence(Enum):
@@ -130,14 +133,8 @@ def get_allele_locus_map(summary_file: str) -> dict:
         if chromosome not in ORDERED_ALLELES:
             continue
 
-        # skip chromosomal deletions and insertions, mito, or massive indels
-        if (
-            ref == 'na'
-            or alt == 'na'
-            or ref == alt
-            or 'm' in chromosome.lower()
-            or (len(ref) + len(alt)) > LARGEST_COMPLEX_INDELS
-        ):
+        # skip chromosomal deletions and insertions, or massive indels
+        if ref == 'na' or alt == 'na' or ref == alt or (len(ref) + len(alt)) > LARGEST_COMPLEX_INDELS:
             continue
 
         # don't include any of the trash bases in ClinVar
@@ -187,12 +184,7 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
     decision = Consequence.UNCERTAIN
 
     # establish counts for this allele
-    counts = {
-        Consequence.BENIGN: 0,
-        Consequence.PATHOGENIC: 0,
-        Consequence.UNCERTAIN: 0,
-        'total': 0,
-    }
+    counts = {Consequence.BENIGN: 0, Consequence.PATHOGENIC: 0, Consequence.UNCERTAIN: 0, 'total': 0}
 
     for each_sub in subs:
         # for 3/4-star ratings, don't look any further
@@ -200,11 +192,7 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
             return each_sub.classification
 
         counts['total'] += 1
-        if each_sub.classification in [
-            Consequence.PATHOGENIC,
-            Consequence.BENIGN,
-            Consequence.UNCERTAIN,
-        ]:
+        if each_sub.classification in [Consequence.PATHOGENIC, Consequence.BENIGN, Consequence.UNCERTAIN]:
             counts[each_sub.classification] += 1
 
     if counts[Consequence.PATHOGENIC] and counts[Consequence.BENIGN]:
@@ -263,7 +251,7 @@ def check_stars(subs: list[Submission]) -> int:
     return minimum
 
 
-def process_line(data: list[str]) -> tuple[int, Submission]:
+def process_submission_line(data: list[str]) -> tuple[int, Submission]:
     """
     takes a line, strips out useful content as a 'Submission'
 
@@ -273,7 +261,7 @@ def process_line(data: list[str]) -> tuple[int, Submission]:
     Returns:
         the allele ID and corresponding Submission details
     """
-    allele_id = int(data[0])
+    var_id = int(data[0])
     if data[1] in PATH_SIGS:
         classification = Consequence.PATHOGENIC
     elif data[1] in BENIGN_SIGS:
@@ -286,7 +274,7 @@ def process_line(data: list[str]) -> tuple[int, Submission]:
     sub = data[9].lower()
     rev_status = data[6].lower()
 
-    return allele_id, Submission(date, sub, classification, rev_status)
+    return var_id, Submission(date, sub, classification, rev_status)
 
 
 def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
@@ -307,7 +295,7 @@ def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
     return hl.Table.from_pandas(pdf, key=['locus', 'alleles'])
 
 
-def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, list[Submission]]:
+def get_all_decisions(submission_file: str, var_ids: set[int]) -> dict[int, list[Submission]]:
     """
     obtains all submissions per-allele which pass basic criteria
         - not a blacklisted submitter
@@ -315,23 +303,22 @@ def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, l
 
     Args:
         submission_file (): file containing submission-per-line
-        allele_ids (): only process alleleIDs we have pos data for
+        var_ids (): only process Var IDs we have pos data for
 
     Returns:
-        dictionary of alleles and their corresponding submissions
+        dictionary of var IDs and their corresponding submissions
     """
 
     submission_dict = defaultdict(list)
 
     for line in lines_from_gzip(submission_file):
-        a_id, line_sub = process_line(line)
+        var_id, line_sub = process_submission_line(line)
 
         # skip rows where the variantID isn't in this mapping
         # this saves a little effort on haplotypes, CNVs, and SVs
         if (
-            (a_id not in allele_ids)
+            (var_id not in var_ids)
             or (line_sub.submitter in BLACKLIST)
-            or (line_sub.review_status in USELESS_RATINGS)
             or (line_sub.classification == Consequence.UNKNOWN)
         ):
             continue
@@ -341,7 +328,7 @@ def get_all_decisions(submission_file: str, allele_ids: set[int]) -> dict[int, l
             if line_sub.classification == consequence and line_sub.submitter in submitters:
                 continue
 
-        submission_dict[a_id].append(line_sub)
+        submission_dict[var_id].append(line_sub)
 
     return submission_dict
 
@@ -402,9 +389,7 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
 
     # start a hail runtime
     hl.init(default_reference='GRCh38')
-
-    # # may need this as a subsequent line, depending on the Hail version being used
-    # hl.default_reference(hl.get_reference('GRCh38'))  # noqa: ERA001
+    # hl.context.init_local(default_reference='GRCh38')
 
     # define the schema for each written line
     schema = hl.dtype(
@@ -428,7 +413,9 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
 
     # write out to the specified location
     ht.write(f'{out_path}.ht', overwrite=True)
-    return ht
+
+    # read the localised version
+    return hl.read_table(f'{out_path}.ht')
 
 
 def write_vep_vcf(clinvar_table: hl.Table, output_root: str):
@@ -486,7 +473,45 @@ def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
     logging.info(f'Wrote SNV VCF to {vcf_path}')
 
 
-def main(subs: str, variants: str, output_root: str):
+def cli_main():
+    logging.basicConfig(level=logging.INFO)
+    parser = ArgumentParser()
+    parser.add_argument('-s', help='submission_summary.txt.gz from NCBI', required=True)
+    parser.add_argument('-v', help='variant_summary.txt.gz from NCBI', required=True)
+    parser.add_argument('-o', help='output root, for table, json, and path-only VCF', required=True)
+    parser.add_argument('--minimal', help='only keep path. and 1+ star benign', action='store_true')
+    parser.add_argument('-b', help='sites to blacklist', nargs='+', default=[])
+    args = parser.parse_args()
+
+    # if sites are blacklisted on the CLI, update the global BLACKLIST value
+    # temporary solution while we continue to validate Talos
+    if args.b:
+        BLACKLIST.update(args.b)
+
+    main(subs=args.s, variants=args.v, output_root=args.o, minimal=args.minimal)
+
+
+def only_keep_talos_relevant_entries(results: list[dict]) -> list[dict]:
+    """
+    filters the results to only those used in Talos:
+    - all Pathogenic ratings
+    - all Benign with >= 1 Star
+
+    Args:
+        results (list[dict]): all results
+
+    Returns:
+        the same results, but reduced
+    """
+    return [
+        result
+        for result in results
+        if (result['clinical_significance'] == Consequence.PATHOGENIC.value)
+        or ((result['clinical_significance'] == Consequence.BENIGN.value) and (result['gold_stars'] > 0))
+    ]
+
+
+def main(subs: str, variants: str, output_root: str, minimal: bool):
     """
     Redefines what it is to be a clinvar summary
 
@@ -494,21 +519,23 @@ def main(subs: str, variants: str, output_root: str):
         subs (str): file path to all submissions (gzipped)
         variants (str): file path to variant summary (gzipped)
         output_root (str): path to write JSON out to
+        minimal (bool): only keep the talos-relevant entries
     """
 
     logging.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants)
 
-    logging.info('Getting all decisions, indexed on clinvar AlleleID')
+    logging.info('Getting all decisions, indexed on clinvar Var ID')
+
     # the raw IDs - some have ambiguous X/Y mappings
     all_uniq_ids = {x['var_id'] for x in allele_map.values()}
-    decision_dict = get_all_decisions(submission_file=subs, allele_ids=all_uniq_ids)
+    decision_dict = get_all_decisions(submission_file=subs, var_ids=all_uniq_ids)
 
     # placeholder to fill wth per-allele decisions
     all_decisions = {}
 
     # now filter each set of decisions per allele
-    for allele_id, submissions in decision_dict.items():
+    for var_id, submissions in decision_dict.items():
         # filter against ACMG date, if appropriate
         filtered_submissions = acmg_filter_submissions(submissions)
 
@@ -525,11 +552,12 @@ def main(subs: str, variants: str, output_root: str):
         if rating in [Consequence.UNCERTAIN, Consequence.UNKNOWN]:
             continue
 
-        all_decisions[allele_id] = (rating, stars)
+        all_decisions[var_id] = (rating, stars)
 
     # now match those up with the variant coordinates
+    logging.info('Matching decisions to variant coordinates')
     complete_decisions = []
-    for var_details in allele_map.values():
+    for uniq_var_id, var_details in allele_map.items():
         var_id = var_details['var_id']
 
         # we may have found no relevant submissions for this variant
@@ -544,9 +572,16 @@ def main(subs: str, variants: str, output_root: str):
                 'position': var_details['pos'],
                 'clinical_significance': all_decisions[var_id][0].value,
                 'gold_stars': all_decisions[var_details['var_id']][1],
-                'allele_id': var_id,
+                'allele_id': allele_map[uniq_var_id]['allele'],
             },
         )
+
+    # optionally, filter to just minimal useful entries
+    if minimal:
+        logging.info('Producing the reduced output set - Pathogenic and Strong Benign')
+        complete_decisions = only_keep_talos_relevant_entries(complete_decisions)
+
+    logging.info(f'{len(complete_decisions)} ClinVar entries remain')
 
     # sort all collected decisions, trying to reduce overhead in HT later
     complete_decisions_sorted = sort_decisions(complete_decisions)
@@ -561,6 +596,7 @@ def main(subs: str, variants: str, output_root: str):
         for each_dict in complete_decisions_sorted:
             handle.write(f'{json.dumps(each_dict)}\n')
 
+    logging.info('JSON written to file, parsing into a Hail Table')
     ht = parse_into_table(json_path=json_output, out_path=output_root)
 
     # export this table of decisions as a tabix-indexed VCF
@@ -572,12 +608,4 @@ def main(subs: str, variants: str, output_root: str):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-
-    parser = ArgumentParser()
-    parser.add_argument('-s', help='submission_summary.txt.gz from NCBI', required=True)
-    parser.add_argument('-v', help='variant_summary.txt.gz from NCBI', required=True)
-    parser.add_argument('-o', help='output root, for table, json, and pathogenic-variants-only VCF', required=True)
-    args = parser.parse_args()
-
-    main(subs=args.s, variants=args.v, output_root=args.o)
+    cli_main()
