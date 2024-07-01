@@ -26,8 +26,8 @@ docker run -v "$(pwd)/data":/data clinvarbitration:example \
 ## This is where you should run VEP on data/clinvar_summary.vcf.bgz, with protein consequence annotation per transcript
 ## Let's imagine you did that, and the result is in data/pathogenic_annotated.vcf.bgz
 ## I've enclosed a 10-variant example of this, as annotated by https://www.ensembl.org/Homo_sapiens/Tools/VEP
-#docker run --platform linux/amd64 -v "$(pwd)/data":/data clinvarbitration:example \
-#    /bin/bash -c "python3 /clinvarbitration/clinvar_by_codon.py -i /data/pathogenic_annotated.vcf.bgz -o /data/pm5"
+docker run --platform linux/amd64 -v "$(pwd)/data":/data clinvarbitration:example \
+    pm5_table -i /data/pathogenic_annotated.vcf.bgz -o /data/pm5
 
 # upon completion, this will generate files in the data directory:
 # - data/pm5.json - a JSON file containing the PM5 results, one JSON object per line
