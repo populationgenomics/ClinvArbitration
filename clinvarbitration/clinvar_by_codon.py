@@ -108,6 +108,9 @@ def main(input_vcf: str, output_root: str):
     # now set a schema to read that into a table... if you want hail
     schema = hl.dtype('struct{newkey:str,clinvar_alleles:str}')
 
+    # start the local hail runtime
+    hl.context.init_local(default_reference='GRCh38')
+
     # import the table, and transmute to top-level attributes
     ht = hl.import_table(json_out_path, no_header=True, types={'f0': schema})
     ht = ht.transmute(**ht.f0)
