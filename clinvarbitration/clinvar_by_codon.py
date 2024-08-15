@@ -88,12 +88,12 @@ def main(input_vcf: str, output_root: str):
         # extract the clinvar details (added in previous script)
         clinvar_allele = variant.INFO['allele_id']
         clinvar_stars = variant.INFO['gold_stars']
-        clinvar_key = f'{clinvar_allele}:{clinvar_stars}'
+        clinvar_key = f'{clinvar_allele}::{clinvar_stars}'
 
         # iterate over all missense consequences
         for csq_dict in variant_consequences(variant, header_csq):
             # add this clinvar entry in relation to the protein consequence
-            protein_key = f"{csq_dict['ensp']}:{csq_dict['protein_position']}"
+            protein_key = f"{csq_dict['ensp']}::{csq_dict['protein_position']}"
             clinvar_dict[protein_key].add(clinvar_key)
 
     # save the dictionary locally
