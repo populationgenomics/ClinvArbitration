@@ -28,7 +28,7 @@ The re-summary is rapid, and can be repeated at regular intervals, taking the la
    * If an Expert Review/Clinical Guideline submission is present - choose that rating.
    * If both Pathogenic and Benign submissions are present, check for a confident majority (default values: >= 60% in majority, <= 20% in minority). If there is a clear majority, choose as the overall rating.
    * If both Pathogenic and Benign subs are present, but no clear majority, assign `Conflicting`.
-   * If over half of submissions at the allele are `Uncertain`, rate as `Uncertain`.
+   * If >60% of submissions at the allele are `Uncertain`, rate as `Uncertain`.
    * If any Pathogenic submissions, take `Pathogenic`
    * If any Benign submissions, take `Benign`
    * No satisfied conditions - `Unknown/VUS`

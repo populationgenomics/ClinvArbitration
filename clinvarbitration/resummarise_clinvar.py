@@ -209,8 +209,8 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
         else:
             decision = Consequence.CONFLICTING
 
-    # more than half are uncertain, call it uncertain
-    elif counts[Consequence.UNCERTAIN] > counts['total'] / 2:
+    # more than MAJORITY_RATIO are uncertain, call it uncertain
+    elif counts[Consequence.UNCERTAIN] > (counts['total'] * MAJORITY_RATIO):
         decision = Consequence.UNCERTAIN
 
     # any pathogenic - call it pathogenic
