@@ -15,6 +15,7 @@ BASIC_SUB = Submission(datetime.now(tz=TIMEZONE), 'foo', Consequence.UNKNOWN, 'r
     [
         ([Consequence.PATHOGENIC], Consequence.PATHOGENIC),
         ([Consequence.PATHOGENIC, Consequence.PATHOGENIC], Consequence.PATHOGENIC),
+        ([Consequence.PATHOGENIC, Consequence.UNCERTAIN], Consequence.PATHOGENIC),
         ([Consequence.BENIGN], Consequence.BENIGN),
         ([Consequence.BENIGN, Consequence.PATHOGENIC], Consequence.CONFLICTING),
     ],
