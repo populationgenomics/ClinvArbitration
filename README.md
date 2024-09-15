@@ -2,7 +2,7 @@
 
 ## motivation
 
-During the creation of the [Automated Interpretation Pipeline (AIP)](https://www.github.ocom/populationgenomics/automated-interpretation-pipeline), a tool for identifying clinically relevant variants in large cohorts, we leveraged the entries in [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) as a contributing factor in determining pathogenicity. During development of this tool we determined that the default summaries generated in ClinVar were highly conservative; see the [table here](https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/#agg_germline) describing the aggregate classification logic.
+During the creation of [Talos](https://www.github.ocom/populationgenomics/automated-interpretation-pipeline), a tool for identifying clinically relevant variants in large cohorts, we leveraged the entries in [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) as a contributing factor in determining pathogenicity. During development of this tool we determined that the default summaries generated in ClinVar were highly conservative; see the [table here](https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/#agg_germline) describing the aggregate classification logic.
 
 ## content
 
