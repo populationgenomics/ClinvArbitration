@@ -26,7 +26,7 @@ setup(
     name='clinvarbitration',
     description='CPG ClinVar Re-interpretation',
     long_description=readme,
-    version='1.3.0',
+    version='1.4.0',
     author='Matthew Welland, CPG',
     author_email='matthew.welland@populationgenomics.org.au, cas.simons@populationgenomics.org.au',
     url='https://github.com/populationgenomics/ClinvArbitration',
