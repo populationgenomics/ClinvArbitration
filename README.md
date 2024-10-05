@@ -2,11 +2,11 @@
 
 ## motivation
 
-During the creation of [Talos](https://www.github.ocom/populationgenomics/automated-interpretation-pipeline), a tool for identifying clinically relevant variants in large cohorts, we leveraged the entries in [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) as a contributing factor in determining pathogenicity. During development of this tool we determined that the default summaries generated in ClinVar were highly conservative; see the [table here](https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/#agg_germline) describing the aggregate classification logic.
+During the creation of [Talos](https://www.github.com/populationgenomics/automated-interpretation-pipeline), a tool for identifying clinically relevant variants in large cohorts, we use [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) ratings as a contributing factor in determining pathogenicity. During development of this tool we determined that the default summaries generated in ClinVar were highly conservative; see the [table here](https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/#agg_germline) describing the aggregate classification logic.
 
 ## content
 
-This repository contains an alternative algorithm ([described here](docs/algorithm.md)) for re-visiting the ClinVar default results, generating alternative decisions which tend towards clear assignment of pathogenic/benign ratings. These ratings are not intended as a replacement of ClinVar's own decisions, but may provide value in situations where an analyst would benefit from seeing that though conflicting submissions exist, there is a bias towards either benign or pathogenic ratings.
+This repository contains an alternative algorithm ([described here](docs/algorithm.md)) for re-aggregating the individual ClinVar submissions, generating decisions which favour clear assignment of pathogenic/benign ratings instead of defaulting to 'conflicting'. These ratings are not intended as a replacement of ClinVar's own decisions, but may provide value by showing that that though conflicting submissions exist, there is a clear bias towards either benign or pathogenic ratings.
 
 ## outputs
 
