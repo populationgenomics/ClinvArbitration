@@ -74,7 +74,7 @@ class Consequence(Enum):
 
     BENIGN = 'Benign'
     CONFLICTING = 'Conflicting'
-    PATHOGENIC = 'Pathogenic'
+    PATHOGENIC = 'Pathogenic/Likely Pathogenic'
     UNCERTAIN = 'VUS'
     UNKNOWN = 'Unknown'
 
