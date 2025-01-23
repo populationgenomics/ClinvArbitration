@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 import zoneinfo
 
-from clinvarbitration.resummarise_clinvar import Consequence, Submission, consequence_decision, check_stars
+from clinvarbitration.resummarise_clinvar import Consequence, Submission, check_stars, consequence_decision
 
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
 BASIC_SUB = Submission(datetime.now(tz=TIMEZONE), 'foo', Consequence.UNKNOWN, 'review')
