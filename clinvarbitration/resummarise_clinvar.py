@@ -241,12 +241,14 @@ def check_stars(subs: list[Submission]) -> int:
     """
     minimum = 0
     for sub in subs:
+        if sub.classification in (Consequence.UNCERTAIN, Consequence.UNKNOWN):
+            continue
         if sub.review_status == 'practice guideline':
-            return 4
+            minimum = 4
         if sub.review_status == 'reviewed by expert panel':
-            return 3
+            minimum = max(minimum, 3)
         if sub.review_status not in NO_STAR_RATINGS:
-            minimum = 1
+            minimum = max(minimum, 1)
 
     return minimum
 
