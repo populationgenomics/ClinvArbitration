@@ -1,7 +1,7 @@
 FROM python:3.10-bullseye
 
 # take as a command line argument, or
-ARG RELEASE=${RELEASE:-1.5.0}
+ARG RELEASE=${RELEASE:-1.5.1}
 
 RUN apt update && apt install -y \
         apt-transport-https \
