@@ -12,7 +12,6 @@ from clinvarbitration.cpg_flow.stages import (
     PackageForRelease,
 )
 from cpg_flow.workflow import run_workflow
-from cpg_utils.config import config_retrieve
 
 
 def cli_main():
