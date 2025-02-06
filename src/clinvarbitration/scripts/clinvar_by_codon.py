@@ -59,7 +59,7 @@ def main(input_tsv: str, output_root: str):
     with open(input_tsv) as tsv_reader:
         for row in tsv_reader:
             # transcript, amino acid change, clinvar allele id, clinvar gold stars
-            tx, aa, aid, stars = row.split('\t')
+            tx, aa, aid, stars = row.rstrip().split('\t')
 
             # find the codon number
             match = NUMBER_RE.match(aa)
