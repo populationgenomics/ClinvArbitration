@@ -30,5 +30,3 @@ COPY src src/
 COPY bcftools_data bcftools_data/
 
 RUN pip install .
-
-# RUN pip install --no-cache-dir git+https://github.com/populationgenomics/ClinvArbitration.git@${RELEASE}
