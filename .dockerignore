@@ -1,4 +1,6 @@
 venv
 .ClinvArbitration*
+ClinvArbitration.egg.info
 build
 src/clinvarbitration.egg-info
+clinvarbitration
