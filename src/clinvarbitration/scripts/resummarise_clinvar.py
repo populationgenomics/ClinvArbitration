@@ -428,7 +428,7 @@ def write_vep_vcf(clinvar_table: hl.Table, output_root: str):
         output_root (str): Path to write files to
     """
     # export this data in VCF format
-    vcf_path = f'{output_root}_for_VEP.vcf.bgz'
+    vcf_path = f'{output_root}_unfiltered.vcf.bgz'
     hl.export_vcf(clinvar_table, vcf_path, tabix=True)
     logging.info(f'Wrote VCF to {vcf_path}')
 

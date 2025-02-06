@@ -26,7 +26,8 @@ from collections import defaultdict
 import hail as hl
 
 # captures the number in amino_acid_changes, e.g. "334N>334T"
-NUMBER_RE = re.compile(r'(\d+)\D>(\d+)\D')
+# there's the potential to not have the last AA if it's a nonsense
+NUMBER_RE = re.compile(r'(\d+)\D>(\d+)\D?')
 
 
 def cli_main():
@@ -65,6 +66,8 @@ def main(input_tsv: str, output_root: str):
 
             if not match:
                 raise ValueError(f'No codon found in {aa}')
+
+            assert match.group(1) == match.group(2), f'Codon numbers do not match in {aa}'
 
             aa_number = match.group(1)
 
