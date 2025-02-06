@@ -49,6 +49,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            # sets off the whole workflow in cpg-flow orchestrated Stages
+            'run_workflow = clinvarbitration.cpg_flow.run_workflow:cli_main',
             # Step 1; re-summarise ClinVar using altered conflict resolution
             'resummary = clinvarbitration.scripts.resummarise_clinvar:cli_main',
             # Step 2, post-annotation; obtain PM5 annotations from VEP annotated clinvar
