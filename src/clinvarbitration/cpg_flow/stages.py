@@ -1,23 +1,37 @@
+from datetime import datetime
+from functools import cache
 from os.path import join
 
 from cpg_utils import Path, to_path
 from cpg_utils.config import config_retrieve, image_path
 from cpg_utils.hail_batch import authenticate_cloud_credentials_in_job, get_batch
 
-
 from cpg_flow.stage import MultiCohortStage, StageInput, StageOutput, stage
 from cpg_flow.targets import MultiCohort
 
-from clinvarbitration.cpg_flow.utils import DATE_STRING
+
+@cache
+def get_output_folder():
+    """
+    get the folder to use for this run
+    sits in the cpg-common bucket, in a folder named YY-MM
+    """
+
+    return to_path(
+        join(
+            config_retrieve(['storage', 'common', 'analysis']),
+            'clinvarbitration',
+            datetime.now().strftime('%y-%m'),
+        ),
+    )
 
 
 @stage
 class CopyLatestClinvarFiles(MultiCohortStage):
     def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
-        common_folder = join(config_retrieve(['storage', 'common', 'analysis']), 'clinvarbitration', DATE_STRING)
         return {
-            'submission_file': to_path(join(common_folder, 'submission_summary.txt.gz')),
-            'variant_file': to_path(join(common_folder, 'variant_summary.txt.gz')),
+            'submission_file': to_path(join(get_output_folder(), 'submission_summary.txt.gz')),
+            'variant_file': to_path(join(get_output_folder(), 'variant_summary.txt.gz')),
         }
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
@@ -25,7 +39,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
         run a wget copy of the relevant files into GCP
         """
         bash_job = get_batch().new_bash_job('wget latest ClinVar raw files')
-        bash_job.image(config_retrieve(['workflow', 'driver_image']))
+        bash_job.image(image_path('clinvarbitration'))
 
         directory = 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/'
         sub_file = 'submission_summary.txt.gz'
@@ -48,17 +62,9 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         """
         a couple of files and a HT as Paths
         """
-
-        common_folder = to_path(
-            join(
-                config_retrieve(['storage', 'common', 'analysis']),
-                'clinvarbitration',
-                DATE_STRING,
-            ),
-        )
         return {
-            'clinvar_decisions': common_folder / 'clinvar_decisions.ht.tar.gz',
-            'snv_vcf': common_folder / 'pathogenic_snvs.vcf.bgz',
+            'clinvar_decisions': get_output_folder() / 'clinvar_decisions.ht.tar.gz',
+            'snv_vcf': get_output_folder() / 'pathogenic_snvs.vcf.bgz',
         }
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
@@ -103,16 +109,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
     """
 
     def expected_outputs(self, mc: MultiCohort) -> Path:
-        return (
-            to_path(
-                join(
-                    config_retrieve(['storage', 'common', 'analysis']),
-                    'clinvarbitration',
-                    DATE_STRING,
-                )
-            )
-            / 'annotated_snv.tsv'
-        )
+        return to_path(get_output_folder()) / 'annotated_snv.tsv'
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
         outputs = self.expected_outputs(mc)
@@ -132,6 +129,8 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         job.storage('10G')
 
         # -g is the GFF3 file, -f is the reference fasta
+        # TODO check if this works correctly
+        #  - it exists on a base mismatch between... VCF and reference? GFF3 and reference?
         job.command(f'bcftools csq -f {ref_fasta} -g {gff3} {snv_vcf} -o annotated_output.vcf')
 
         # split the bcftools CSQ fields, filter to missense, and write out a tab-delimited file
@@ -153,12 +152,9 @@ class Pm5TableGeneration(MultiCohortStage):
         """
         a single HT, compressed into a tarball
         """
-        common_folder = to_path(
-            join(config_retrieve(['storage', 'common', 'analysis']), 'clinvarbitration', DATE_STRING),
-        )
         return {
-            'pm5_ht': common_folder / 'clinvar_pm5.ht.tar.gz',
-            'pm5_json': common_folder / 'clinvar_pm5.json',
+            'pm5_ht': get_output_folder() / 'clinvar_pm5.ht.tar.gz',
+            'pm5_json': get_output_folder() / 'clinvar_pm5.json',
         }
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
@@ -193,14 +189,7 @@ class PackageForRelease(MultiCohortStage):
     """
 
     def expected_outputs(self, multicohort: MultiCohort) -> Path:
-        common_folder = to_path(
-            join(
-                config_retrieve(['storage', 'common', 'analysis']),
-                'clinvarbitration',
-                DATE_STRING,
-            ),
-        )
-        return common_folder / 'clinvarbitration.tar.gz'
+        return to_path(get_output_folder()) / 'clinvarbitration.tar.gz'
 
     def queue_jobs(self, multicohort: MultiCohort, inputs: StageInput) -> StageOutput:
         """
