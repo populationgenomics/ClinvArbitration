@@ -148,7 +148,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
 
 
 @stage(required_stages=AnnotateClinvarSnvsWithBcftools)
-class PM5TableGeneration(MultiCohortStage):
+class Pm5TableGeneration(MultiCohortStage):
     def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
         """
         a single HT, compressed into a tarball
@@ -157,7 +157,7 @@ class PM5TableGeneration(MultiCohortStage):
             join(config_retrieve(['storage', 'common', 'analysis']), 'clinvarbitration', DATE_STRING),
         )
         return {
-            'clinvar_pm5': common_folder / 'clinvar_pm5.ht.tar.gz',
+            'pm5_ht': common_folder / 'clinvar_pm5.ht.tar.gz',
             'pm5_json': common_folder / 'clinvar_pm5.json',
         }
 
@@ -172,21 +172,19 @@ class PM5TableGeneration(MultiCohortStage):
 
         annotated_snvs = inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools)
 
-        # using a declared resource group and only exporting part of it failed... not sure why
         job.command(f'pm5_table -i {annotated_snvs} -o output')
-        job.command(f'mv output.json {job.output}')
+        job.command(f'mv output.json {job.json}')
+        get_batch().write_output(job.json, str(outputs['pm5_json']))
 
         # compress the HT and remove as a single file
-        job.command(f'tar -czf {str(outputs["clinvar_pm5"])} output.ht')
-
-        # also copy back the JSON file
-        get_batch().write_output(job.output, str(outputs['pm5_json']))
+        job.command(f'tar -czf {job.ht} output.ht')
+        get_batch().write_output(job.ht, str(outputs['pm5_ht']))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
 
 @stage(
-    required_stages=[GenerateNewClinvarSummary, AnnotateClinvarSnvsWithBcftools, PM5TableGeneration],
+    required_stages=[GenerateNewClinvarSummary, AnnotateClinvarSnvsWithBcftools, Pm5TableGeneration],
     analysis_type='custom',
 )
 class PackageForRelease(MultiCohortStage):
@@ -211,21 +209,26 @@ class PackageForRelease(MultiCohortStage):
         """
         tar_output = self.expected_outputs(multicohort)
 
-        # find paths to the previous outputs
-        vcf = inputs.as_path(multicohort, AnnotateClinvarSnvsWithBcftools)
-        pm5 = inputs.as_dict(multicohort, PM5TableGeneration)
-        clinvar_decisions = inputs.as_path(multicohort, GenerateNewClinvarSummary, 'clinvar_decisions')
-
-        job = get_batch().new_job('package clinvarbitration for release')
+        job = get_batch().new_job('Package ClinvArbitration data for release')
         job.storage('10G')
-        job.image(config_retrieve(['workflow', 'driver_image']))
+        job.image(image_path('clinvarbitration'))
+
+        # find paths to the previous outputs
+        pm5 = inputs.as_dict(multicohort, Pm5TableGeneration)
+        clinvar_decisions = inputs.as_str(multicohort, GenerateNewClinvarSummary, 'clinvar_decisions')
+
+        annotated_tsv = get_batch().read_input(inputs.as_str(multicohort, AnnotateClinvarSnvsWithBcftools))
+        pm5_ht = get_batch().read_input(str(pm5['pm5_ht']))
+        pm5_json = get_batch().read_input(str(pm5['pm5_json']))
+        decisions_ht = get_batch().read_input(clinvar_decisions)
+
         job.command(
             f"""
             mkdir clinvarbitration_data
-            gcloud storage cp -r {str(pm5['clinvar_pm5'])} clinvarbitration_data
-            gcloud storage cp {str(pm5['pm5_json'])} clinvarbitration_data
-            gcloud storage cp -r {str(clinvar_decisions)} clinvarbitration_data
-            gcloud storage cp "{vcf}*" clinvarbitration_data
+            mv {annotated_tsv} clinvarbitration_data/annotated_snvs.tsv
+            mv {pm5_json} clinvarbitration_data/pm5.json
+            tar -xzf {pm5_ht} -C clinvarbitration_data
+            tar -xzf {decisions_ht} -C clinvarbitration_data
             tar -czf {job.output} clinvarbitration_data
         """,
         )
