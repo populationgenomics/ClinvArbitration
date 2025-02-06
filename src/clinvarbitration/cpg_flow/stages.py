@@ -21,7 +21,7 @@ def get_output_folder():
         join(
             config_retrieve(['storage', 'common', 'analysis']),
             'clinvarbitration',
-            datetime.now().strftime('%y-%m'),
+            datetime.now().strftime('%y-%m'),  # noqa: DTZ005
         ),
     )
 
@@ -139,7 +139,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         # -s :missense - only keep Consequence==missense variants
         # -f - format string - tab delimited, Transcript, Amino Acid Change, ClinVar allele ID, ClinVar gold stars
         job.command(
-            f'bcftools +split-vep annotated_output.vcf -d -s :missense -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" > {job.output}'  # noqa
+            f'bcftools +split-vep annotated_output.vcf -d -s :missense -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" > {job.output}',  # noqa: E501
         )
 
         get_batch().write_output(job.output, str(outputs))

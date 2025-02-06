@@ -4,10 +4,10 @@ from datetime import datetime
 import pytest
 import zoneinfo
 
-from src import Consequence, Submission, check_stars, consequence_decision
+from clinvarbitration.scripts.resummarise_clinvar import Consequence, Submission, check_stars, consequence_decision
 
-TIMEZONE = zoneinfo.ZoneInfo("Australia/Brisbane")
-BASIC_SUB = Submission(datetime.now(tz=TIMEZONE), "foo", Consequence.UNKNOWN, "review")
+TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
+BASIC_SUB = Submission(datetime.now(tz=TIMEZONE), 'foo', Consequence.UNKNOWN, 'review')
 
 
 def test_check_stars_none():
@@ -19,7 +19,7 @@ def test_check_stars_none():
     dud_2 = deepcopy(BASIC_SUB)
     # Pathogenic, but has a no-star rating
     dud_2.classification = Consequence.PATHOGENIC
-    dud_2.review_status = "no assertion criteria provided"
+    dud_2.review_status = 'no assertion criteria provided'
     assert check_stars([dud_1, dud_2]) == 0
 
 
@@ -45,9 +45,9 @@ def test_check_stars_3():
     expect_1_neutral = deepcopy(BASIC_SUB)
     assert check_stars([expect_1_path, expect_1_neutral]) == 1
     expert_panel = deepcopy(BASIC_SUB)
-    expert_panel.review_status = "reviewed by expert panel"
+    expert_panel.review_status = 'reviewed by expert panel'
     expert_panel.classification = Consequence.PATHOGENIC
-    assert check_stars([expect_1_path, expect_1_neutral, expert_panel]) == 3
+    assert check_stars([expect_1_path, expect_1_neutral, expert_panel]) == 3  # noqa: PLR2004
 
 
 def test_check_stars_4():
@@ -59,17 +59,17 @@ def test_check_stars_4():
     expect_1_neutral = deepcopy(BASIC_SUB)
     assert check_stars([expect_1_path, expect_1_neutral]) == 1
     expert_panel = deepcopy(BASIC_SUB)
-    expert_panel.review_status = "reviewed by expert panel"
+    expert_panel.review_status = 'reviewed by expert panel'
     expert_panel.classification = Consequence.PATHOGENIC
-    assert check_stars([expect_1_path, expect_1_neutral, expert_panel]) == 3
+    assert check_stars([expect_1_path, expect_1_neutral, expert_panel]) == 3  # noqa: PLR2004
     practice_guideline = deepcopy(BASIC_SUB)
-    practice_guideline.review_status = "practice guideline"
+    practice_guideline.review_status = 'practice guideline'
     practice_guideline.classification = Consequence.PATHOGENIC
-    assert check_stars([expect_1_path, expect_1_neutral, expert_panel, practice_guideline]) == 4
+    assert check_stars([expect_1_path, expect_1_neutral, expert_panel, practice_guideline]) == 4  # noqa: PLR2004
 
 
 @pytest.mark.parametrize(
-    ("consequences", "expected"),
+    ('consequences', 'expected'),
     [
         ([Consequence.PATHOGENIC], Consequence.PATHOGENIC),
         ([Consequence.PATHOGENIC, Consequence.PATHOGENIC], Consequence.PATHOGENIC),

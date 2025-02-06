@@ -526,10 +526,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool):
         filtered_submissions = acmg_filter_submissions(submissions)
 
         # obtain an aggregate rating
-        if not filtered_submissions:
-            rating = Consequence.UNCERTAIN
-        else:
-            rating = consequence_decision(filtered_submissions)
+        rating = Consequence.UNCERTAIN if not filtered_submissions else consequence_decision(filtered_submissions)
 
         # assess stars in remaining entries
         stars = check_stars(filtered_submissions)
