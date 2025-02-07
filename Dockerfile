@@ -25,7 +25,7 @@ RUN git clone --recurse-submodules https://github.com/samtools/htslib.git \
 # now do some fun stuff, installing ClinvArbitration
 WORKDIR /clinvarbitration
 
-COPY setup.py README.md ./
+COPY example_script.sh setup.py README.md ./
 COPY src src/
 COPY bcftools_data bcftools_data/
 

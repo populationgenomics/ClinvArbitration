@@ -212,6 +212,9 @@ class PackageForRelease(MultiCohortStage):
         pm5_json = get_batch().read_input(str(pm5['pm5_json']))
         decisions_ht = get_batch().read_input(clinvar_decisions)
 
+        # create a new folder, move the files into it
+        # unpack all the already compressed HTs into it
+        # the compress once, containing all files for distribution
         job.command(
             f"""
             mkdir clinvarbitration_data
