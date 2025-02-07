@@ -49,6 +49,11 @@ ignore = [
     "I001", # Import block is un-sorted or un-formatted (to remove soon)
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# suppress the ARG002 "Unused method argument" warning in the stages.py file
+## - we don't need any generic cpg-flow arguments, but need to fit the required method signature
+"src/clinvarbitration/cpg_flow/stages.py" = ["ARG002"]
+
 [tool.ruff.format]
 indent-style = 'space'
 quote-style = "single"
