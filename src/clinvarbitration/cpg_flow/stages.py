@@ -39,7 +39,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
         run a wget copy of the relevant files into GCP
         """
         bash_job = get_batch().new_bash_job('wget latest ClinVar raw files')
-        bash_job.image(image_path('clinvarbitration'))
+        bash_job.image(config_retrieve(['workflow', 'driver_image']))
 
         directory = 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/'
         sub_file = 'submission_summary.txt.gz'
@@ -70,7 +70,7 @@ class GenerateNewClinvarSummary(MultiCohortStage):
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
         # relatively RAM intensive, short running task
         job = get_batch().new_job('Run ClinvArbitration Summary')
-        job.image(image_path('clinvarbitration')).memory('highmem').cpu('2')
+        job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
         authenticate_cloud_credentials_in_job(job)
 
         # declare a resource group, leave the HT path implicit
@@ -125,7 +125,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         gff3 = f'/clinvarbitration/bcftools_data/{genome_build}.gff3.gz'
 
         job = get_batch().new_job('Annotate Clinvar SNVs with BCFtools', attributes={'tool': 'bcftools'})
-        job.image(image_path('clinvarbitration'))
+        job.image(config_retrieve(['workflow', 'driver_image']))
         job.storage('10G')
 
         # -g is the GFF3 file, -f is the reference fasta
@@ -161,7 +161,7 @@ class Pm5TableGeneration(MultiCohortStage):
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
         # declare a resource group, but don't copy the whole thing back
         job = get_batch().new_job('Run ClinvArbitration PM5')
-        job.image(image_path('clinvarbitration'))
+        job.image(config_retrieve(['workflow', 'driver_image']))
         authenticate_cloud_credentials_in_job(job)
 
         # get the expected outputs
@@ -181,7 +181,11 @@ class Pm5TableGeneration(MultiCohortStage):
 
 
 @stage(
-    required_stages=[GenerateNewClinvarSummary, AnnotateClinvarSnvsWithBcftools, Pm5TableGeneration],
+    required_stages=[
+        GenerateNewClinvarSummary,
+        AnnotateClinvarSnvsWithBcftools,
+        Pm5TableGeneration,
+    ],
     analysis_type='custom',
 )
 class PackageForRelease(MultiCohortStage):
@@ -201,7 +205,7 @@ class PackageForRelease(MultiCohortStage):
 
         job = get_batch().new_job('Package ClinvArbitration data for release')
         job.storage('10G')
-        job.image(image_path('clinvarbitration'))
+        job.image(config_retrieve(['workflow', 'driver_image']))
 
         # find paths to the previous outputs
         pm5 = inputs.as_dict(multicohort, Pm5TableGeneration)

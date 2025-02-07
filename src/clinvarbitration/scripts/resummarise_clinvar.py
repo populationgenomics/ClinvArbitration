@@ -20,6 +20,7 @@ import gzip
 import json
 import logging
 import re
+import sys
 from argparse import ArgumentParser
 from collections import defaultdict
 from collections.abc import Generator
@@ -489,7 +490,7 @@ def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
 
 def cli_main():
     logging.basicConfig(level=logging.INFO)
-    parser = ArgumentParser()
+    parser = ArgumentParser(description='Generates a new clinVar summary from raw submission data')
     parser.add_argument(
         '-s',
         help='submission_summary.txt.gz from NCBI',
@@ -522,6 +523,7 @@ def cli_main():
         default='GRCh38',
         choices=[GRCH37, GRCH38],
     )
+
     args = parser.parse_args()
 
     # if sites are blacklisted on the CLI, update the global BLACKLIST value
