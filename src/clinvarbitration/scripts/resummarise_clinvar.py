@@ -53,7 +53,7 @@ MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
 ORDERED_ALLELES: dict[str, list[str]] = {
     GRCH38: [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM'],
-    GRCH37: list(range(1, 23)) + ['X', 'Y', 'MT'],
+    GRCH37: [*list(map(str, range(1, 23))), 'X', 'Y', 'MT'],
 }
 
 # I really want the linter to just tolerate naive datetimes, but it won't
@@ -163,7 +163,7 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
     return allele_dict
 
 
-def dicts_from_gzip(filename: str) -> Generator[dict[str, str]]:
+def dicts_from_gzip(filename: str) -> Generator[dict[str, str], None, None]:
     """
     generator for gzip reading
 
@@ -174,7 +174,8 @@ def dicts_from_gzip(filename: str) -> Generator[dict[str, str]]:
         generator; yields each line as a dictionary
     """
 
-    header: list[str] | None = None
+    # start with an empty list to please the linter
+    header: list[str] = []
 
     with gzip.open(filename, 'rt') as handle:
         for line in handle:
@@ -271,8 +272,12 @@ def check_stars(subs: list[Submission]) -> int:
 
 def process_submission_line(data: dict[str, str]) -> tuple[int, Submission]:
     """
-    takes a line, strips out useful content as a 'Submission'
-    #VariationID    ClinicalSignificance    DateLastEvaluated       Description     SubmittedPhenotypeInfo  ReportedPhenotypeInfo   ReviewStatus    CollectionMethod        OriginCounts    Submitter       SCV     SubmittedGeneSymbol     ExplanationOfInterpretation   SomaticClinicalImpact   Oncogenicity    ContributesToAggregateClassification
+    takes a line, strips out useful content as a 'Submission'. Relevant fields:
+    #VariationID
+    ClinicalSignificance
+    DateLastEvaluated
+    ReviewStatus
+    Submitter
 
     Args:
         data (): the array of line content
@@ -398,7 +403,7 @@ def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
     return sorted(all_subs, key=lambda x: (ORDERED_ALLELES[assembly].index(x['contig']), x['position']))
 
 
-def parse_into_table(json_path: str, out_path: str) -> hl.Table:
+def parse_into_table(json_path: str, out_path: str, assembly: str) -> hl.Table:
     """
     takes the file of one clinvar variant per line
     processes that line into a table based on the schema
@@ -406,13 +411,14 @@ def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     Args:
         json_path (str): path to the JSON file (temp)
         out_path (str): where to write the Hail table
+        assembly (str): genome build to use
 
     Returns:
         the Hail Table object created
     """
 
     # start a hail runtime
-    hl.context.init_local(default_reference='GRCh38')
+    hl.context.init_local(default_reference=assembly)
 
     # define the schema for each written line
     schema = hl.dtype(
@@ -514,7 +520,7 @@ def cli_main():
         '--assembly',
         help='genome build to use',
         default='GRCh38',
-        choices=['GRCh37', 'GRCh38'],
+        choices=[GRCH37, GRCH38],
     )
     args = parser.parse_args()
 
@@ -630,7 +636,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
             handle.write(f'{json.dumps(each_dict)}\n')
 
     logging.info('JSON written to file, parsing into a Hail Table')
-    ht = parse_into_table(json_path=json_output, out_path=output_root)
+    ht = parse_into_table(json_path=json_output, out_path=output_root, assembly=assembly)
 
     # persist the relevant clinvar annotations in INFO
     ht = ht.transmute(

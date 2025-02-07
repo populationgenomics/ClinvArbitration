@@ -9,6 +9,9 @@ from cpg_utils.hail_batch import authenticate_cloud_credentials_in_job, get_batc
 from cpg_flow.stage import MultiCohortStage, StageInput, StageOutput, stage
 from cpg_flow.targets import MultiCohort
 
+# suppress the ARG002 "Unused method argument" warning in a number of places
+# - we don't need any generic cpg-flow arguments, but need to fit the required method signature
+
 
 @cache
 def get_output_folder():
@@ -28,13 +31,13 @@ def get_output_folder():
 
 @stage
 class CopyLatestClinvarFiles(MultiCohortStage):
-    def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
+    def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:  # noqa: ARG002
         return {
             'submission_file': to_path(join(get_output_folder(), 'submission_summary.txt.gz')),
             'variant_file': to_path(join(get_output_folder(), 'variant_summary.txt.gz')),
         }
 
-    def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
+    def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:  # noqa: ARG002
         """
         run a wget copy of the relevant files into GCP
         """
@@ -58,7 +61,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
 
 @stage(required_stages=CopyLatestClinvarFiles, analysis_type='custom', analysis_keys=['clinvar_decisions'])
 class GenerateNewClinvarSummary(MultiCohortStage):
-    def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
+    def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:  # noqa: ARG002
         """
         a couple of files and a HT as Paths
         """
@@ -108,7 +111,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
     this uses BCFtools for speed and re-deployability, instead of VEP
     """
 
-    def expected_outputs(self, mc: MultiCohort) -> Path:
+    def expected_outputs(self, mc: MultiCohort) -> Path:  # noqa: ARG002
         return to_path(get_output_folder()) / 'annotated_snv.tsv'
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
@@ -149,7 +152,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
 
 @stage(required_stages=AnnotateClinvarSnvsWithBcftools)
 class Pm5TableGeneration(MultiCohortStage):
-    def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
+    def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:  # noqa: ARG002
         """
         a single HT, compressed into a tarball
         """
@@ -189,7 +192,7 @@ class PackageForRelease(MultiCohortStage):
     takes the data created so far, and packages it up for release
     """
 
-    def expected_outputs(self, multicohort: MultiCohort) -> Path:
+    def expected_outputs(self, multicohort: MultiCohort) -> Path:  # noqa: ARG002
         return to_path(get_output_folder()) / 'clinvarbitration.tar.gz'
 
     def queue_jobs(self, multicohort: MultiCohort, inputs: StageInput) -> StageOutput:

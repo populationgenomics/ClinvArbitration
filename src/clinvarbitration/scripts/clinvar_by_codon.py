@@ -36,20 +36,33 @@ def cli_main():
     """
     logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser()
-    parser.add_argument('-i', help='Path to the TSV')
-    parser.add_argument('-o', help='Root to export PM5 table and JSON to')
+    parser.add_argument(
+        '-i',
+        help='Path to the TSV',
+    )
+    parser.add_argument(
+        '-o',
+        help='Root to export PM5 table and JSON to',
+    )
+    parser.add_argument(
+        '--assembly',
+        help='genome build to use',
+        default='GRCh38',
+        choices=['GRCh37', 'GRCh38'],
+    )
     args = parser.parse_args()
 
-    main(input_tsv=args.i, output_root=args.o)
+    main(input_tsv=args.i, output_root=args.o, assembly=args.assembly)
 
 
-def main(input_tsv: str, output_root: str):
+def main(input_tsv: str, output_root: str, assembly: str):
     """
     parse the TSV, and create a re-indexed table
 
     Args:
         input_tsv (str): path to an input vcf
         output_root ():
+        assembly (str): genome build to use
     """
 
     # create a dictionary to store the re-parsed entries
@@ -93,7 +106,7 @@ def main(input_tsv: str, output_root: str):
     schema = hl.dtype('struct{newkey:str,clinvar_alleles:str}')
 
     # start the local hail runtime
-    hl.context.init_local(default_reference='GRCh38')
+    hl.context.init_local(default_reference=assembly)
 
     # import the table, and transmute to top-level attributes
     ht = hl.import_table(json_out_path, no_header=True, types={'f0': schema})
