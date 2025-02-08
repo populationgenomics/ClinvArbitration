@@ -3,7 +3,7 @@ from functools import cache
 from os.path import join
 
 from cpg_utils import Path, to_path
-from cpg_utils.config import config_retrieve, image_path
+from cpg_utils.config import config_retrieve
 from cpg_utils.hail_batch import authenticate_cloud_credentials_in_job, get_batch
 
 from cpg_flow.stage import MultiCohortStage, StageInput, StageOutput, stage

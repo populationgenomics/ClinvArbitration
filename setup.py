@@ -31,7 +31,7 @@ setup(
     ],
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    package_data={'clinvarbitration': ['config_template.toml']},
+    package_data={'clinvarbitration/cpg_flow': ['config_template.toml']},
     include_package_data=True,
     install_requires=[
         'cpg-flow>=v0.1.2',

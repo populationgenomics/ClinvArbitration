@@ -1,11 +1,12 @@
 [workflow]
 name = 'clinvarbitration'
 
-# CPG-flow requires an input dataset or cohort to start up, and a dataset to run as
+# CPG-flow requires an input cohort to start up, a dataset to run as, and a permission level
 # usually these would be populated by analysis-runner
 # a placeholder here is a generic project containing dummy data
+access_level = 'standard'
 dataset = ['fewgenomes']
-input_datasets = ['fewgenomes']
+input_cohorts = ['COH2886']
 
 # if we're just checking everything works, use dry_run
 # this will print the stages, and exit
@@ -32,5 +33,16 @@ delete_scratch_on_exit = true
 dry_run = true
 backend = "local"
 
+[references.broad]
+ref_fasta = 'placeholder'
+
 [storage.common]
 analysis = 'Path_to_output_folder'
+
+[storage.fewgenomes]
+analysis = "gs://cpg-fewgenomes-main-analysis"
+default = "gs://cpg-fewgenomes-main"
+tmp = "gs://cpg-fewgenomes-main-tmp"
+upload = "gs://cpg-fewgenomes-main-upload"
+web = "gs://cpg-fewgenomes-main-web"
+web_url = "https://main-web.populationgenomics.org.au/fewgenomes"
