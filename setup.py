@@ -46,6 +46,7 @@ setup(
             'black',
             'pre-commit',
             'pytest',
+            'pytest-xdist>=3.6.0',
         ],
     },
     entry_points={

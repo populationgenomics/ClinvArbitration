@@ -20,7 +20,6 @@ import gzip
 import json
 import logging
 import re
-import sys
 from argparse import ArgumentParser
 from collections import defaultdict
 from collections.abc import Generator
