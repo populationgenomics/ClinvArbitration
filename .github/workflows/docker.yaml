@@ -27,7 +27,7 @@ jobs:
       BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       IMAGE_NAME: clinvarbitration
-      DOCKER_DEV: australia-southeast1-docker.pkg.dev/cpg-common/images-tmp
+      DOCKER_TMP: australia-southeast1-docker.pkg.dev/cpg-common/images-tmp
       DOCKER_MAIN: australia-southeast1-docker.pkg.dev/cpg-common/images
     steps:
       - uses: actions/checkout@v4
@@ -61,5 +61,5 @@ jobs:
       - name: manually triggered build
         if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' }}
         run: |
-          docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_DEV/$IMAGE_NAME:${{github.event.inputs.tag}}
-          docker push $DOCKER_DEV/$IMAGE_NAME:${{github.event.inputs.tag}}
+          docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
+          docker push $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
