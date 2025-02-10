@@ -1,3 +1,65 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name='clinvarbitration'
+description='CPG ClinVar Re-interpretation'
+readme = "README.md"
+version='2.0.0'
+license={ "file" = "LICENSE" }
+classifiers=[
+    'Environment :: Console',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Natural Language :: English',
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: POSIX',
+    'Operating System :: Unix',
+    'Programming Language :: Python',
+    'Topic :: Scientific/Engineering',
+    'Topic :: Scientific/Engineering :: Bio-Informatics',
+]
+
+dependencies=[
+    'cpg-flow>=v0.1.2',
+    'cpg-utils',
+    'hail>=0.2.133',
+    'pandas>=2.0.3',
+    'pyspark>=3.3.3',
+]
+
+[project.urls]
+Repository = "https://github.com/populationgenomics/ClinvArbitration"
+
+[project.optional-dependencies]
+test = [
+    'bump2version',
+    'black',
+    'pre-commit',
+    'pytest',
+    'pytest-xdist>=3.6.0',
+]
+
+[project.scripts]
+# sets off the whole workflow in cpg-flow orchestrated Stages
+run_workflow = 'clinvarbitration.cpg_flow.run_workflow:cli_main'
+
+# Step 1; re-summarise ClinVar using altered conflict resolution
+resummary = 'clinvarbitration.scripts.resummarise_clinvar:cli_main'
+
+# Step 2, post-annotation; obtain PM5 annotations from VEP annotated clinvar
+pm5_table = 'clinvarbitration.scripts.clinvar_by_codon:cli_main'
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[options]
+include_package_data = true
+
+[options.package_data]
+'clinvarbitration/cpg_flow'=  ['config_template.toml']
+
 [tool.black]
 line-length = 120
 skip-string-normalization = true
@@ -18,11 +80,13 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ['test']
 
-
-
 [tool.ruff]
 line-length = 120
 extend-exclude = ["venv", ".mypy_cache", ".venv", "build", "dist"]
+
+[tool.ruff.format]
+indent-style = 'space'
+quote-style = "single"
 
 [tool.ruff.lint]
 # ignore pydocstyle, flake8-boolean-trap (FBT)
@@ -49,14 +113,10 @@ ignore = [
     "I001", # Import block is un-sorted or un-formatted (to remove soon)
 ]
 
+[tool.ruff.lint.isort]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
 [tool.ruff.lint.per-file-ignores]
 # suppress the ARG002 "Unused method argument" warning in the stages.py file
 ## - we don't need any generic cpg-flow arguments, but need to fit the required method signature
 "src/clinvarbitration/cpg_flow/stages.py" = ["ARG002"]
-
-[tool.ruff.format]
-indent-style = 'space'
-quote-style = "single"
-
-[tool.ruff.lint.isort]
-section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]

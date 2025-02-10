@@ -11,7 +11,7 @@ set -ex
 # for the purposes of this script I'm assuming it is present in data and called ref.fa
 
 # run this script inside the docker image
-#docker run -v "$(pwd)/data":/data clinvarbitration:example bash example_script.sh
+#docker run -v "$(pwd)/data":/data clinvarbitration:example bash example_script_docker.sh
 
 wget -O /data/variant_summary.txt.gz https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz
 wget -O /data/submission_summary.txt.gz https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/submission_summary.txt.gz
