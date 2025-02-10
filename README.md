@@ -21,6 +21,12 @@ We aim to re-run this process monthly, and publish the resulting files as Releas
 
 # Usage
 
+## Download
+
+Before cloning this repository, install [git-lfs](https://github.com/git-lfs/git-lfs) to automatically download the GFF3 files used by BCFTools. These are described in more detail in the relevant [README](bcftools_data/README.txt). 
+
+If git-lfs is not available, the relevant GFF3 files can be easily downloaded from the Ensembl FTP site as  documented in the README.
+
 ## Non-CPG usage
 
 Example scripts outline the steps needed to run this locally. There are two versions, suffixed with `_docker` for running inside a container, or `_local` if you have the package and bcftools installed locally.
