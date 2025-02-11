@@ -180,13 +180,29 @@ class Pm5TableGeneration(MultiCohortStage):
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
 
+def populate_job_meta(output_file: str):
+    """
+    populates some metadata for the job
+
+    Args:
+        output_file (str): path to the output file
+
+    Returns:
+        dict of metadata
+    """
+
+    print(f'Generating output meta for {output_file}')
+    return {'image': config_retrieve(['workflow', 'driver_image'])}
+
+
 @stage(
     required_stages=[
         GenerateNewClinvarSummary,
         AnnotateClinvarSnvsWithBcftools,
         Pm5TableGeneration,
     ],
-    analysis_type='custom',
+    analysis_type='clinvarbitration',
+    update_analysis_meta=populate_job_meta,
 )
 class PackageForRelease(MultiCohortStage):
     """
