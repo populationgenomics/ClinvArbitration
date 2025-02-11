@@ -4,7 +4,7 @@ point of entry script to run this pipeline
 
 from argparse import ArgumentParser
 
-from clinvarbitration.cpg_flow.stages import (
+from clinvarbitration.stages import (
     CopyLatestClinvarFiles,
     GenerateNewClinvarSummary,
     AnnotateClinvarSnvsWithBcftools,

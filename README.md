@@ -43,9 +43,9 @@ All outputs will be generated in the `/data` directory
 
 Internally at CPG, this workflow is run using [CPG-Flow](https://github.com/populationgenomics/cpg-flow), an in-house Hail Batch based workflow executor. The folder `src/clinvarbitration/cpg_flow` contains elements relating to that workflow:
 
-* an [example config file](src/clinvarbitration/cpg_flow/config_template.toml), with enough entries populated that a standard CPG user could dry-run the workflow locally
-* a [workflow runner script](src/clinvarbitration/cpg_flow/run_workflow.py)
-* a definition of all [workflow stages](src/clinvarbitration/cpg_flow/stages.py)
+* an [example config file](src/clinvarbitration/config_template.toml), with enough entries populated that a standard CPG user could dry-run the workflow locally
+* a [workflow runner script](src/clinvarbitration/run_workflow.py)
+* a definition of all [workflow stages](src/clinvarbitration/stages.py)
 
 The intention is that once the Dockerfile within this repository is used, this workflow can be triggered like so:
 
