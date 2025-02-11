@@ -191,8 +191,10 @@ def populate_job_meta(output_file: str):
         dict of metadata
     """
 
+    from clinvarbitration import __version__ as clinvarbitration_version
+
     print(f'Generating output meta for {output_file}')
-    return {'image': config_retrieve(['workflow', 'driver_image'])}
+    return {'image': config_retrieve(['workflow', 'driver_image']), 'version': clinvarbitration_version}
 
 
 @stage(

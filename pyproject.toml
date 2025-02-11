@@ -43,7 +43,7 @@ test = [
 
 [project.scripts]
 # sets off the whole workflow in cpg-flow orchestrated Stages
-run_workflow = 'clinvarbitration.cpg_flow.run_workflow:cli_main'
+run_workflow = 'clinvarbitration.run_workflow:cli_main'
 
 # Step 1; re-summarise ClinVar using altered conflict resolution
 resummary = 'clinvarbitration.scripts.resummarise_clinvar:cli_main'
@@ -58,7 +58,7 @@ package-dir = {"" = "src"}
 include_package_data = true
 
 [options.package_data]
-'clinvarbitration/cpg_flow'=  ['config_template.toml']
+'clinvarbitration'=  ['config_template.toml']
 
 [tool.black]
 line-length = 120
