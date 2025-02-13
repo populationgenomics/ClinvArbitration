@@ -30,8 +30,8 @@ def get_output_folder():
 class CopyLatestClinvarFiles(MultiCohortStage):
     def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
         return {
-            'submission_file': to_path(join(get_output_folder(), 'submission_summary.txt.gz')),
-            'variant_file': to_path(join(get_output_folder(), 'variant_summary.txt.gz')),
+            'submission_file': get_output_folder() / 'submission_summary.txt.gz',
+            'variant_file': get_output_folder() / 'variant_summary.txt.gz',
         }
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
@@ -109,7 +109,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
     """
 
     def expected_outputs(self, mc: MultiCohort) -> Path:
-        return to_path(get_output_folder()) / 'annotated_snv.tsv'
+        return get_output_folder() / 'annotated_snv.tsv'
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
         outputs = self.expected_outputs(mc)
@@ -212,7 +212,7 @@ class PackageForRelease(MultiCohortStage):
     """
 
     def expected_outputs(self, multicohort: MultiCohort) -> Path:
-        return to_path(get_output_folder()) / 'clinvarbitration.tar.gz'
+        return get_output_folder() / 'clinvarbitration.tar.gz'
 
     def queue_jobs(self, multicohort: MultiCohort, inputs: StageInput) -> StageOutput:
         """
