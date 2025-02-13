@@ -1,5 +1,6 @@
 name: Docker
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -63,6 +64,11 @@ jobs:
 
       - name: manually triggered build
         if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' }}
+        run: |
+          docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
+          docker push $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
+      - name: Pull Request triggered build
+        if: ${{ github.event_name == 'pull_request' && github.ref_name != 'main' }}
         run: |
           docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
           docker push $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
