@@ -72,4 +72,4 @@ jobs:
         if: ${{ github.event_name == 'pull_request' && github.ref_name != 'main' }}
         run: |
           docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:test
-          docker push $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
+          docker push $DOCKER_TMP/$IMAGE_NAME:test
