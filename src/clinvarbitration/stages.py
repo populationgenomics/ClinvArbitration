@@ -146,7 +146,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         return self.make_outputs(target=mc, jobs=job, data=outputs)
 
 
-@stage(required_stages=AnnotateClinvarSnvsWithBcftools)
+@stage(required_stages=[AnnotateClinvarSnvsWithBcftools])
 class Pm5TableGeneration(MultiCohortStage):
     def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
         """
@@ -165,7 +165,7 @@ class Pm5TableGeneration(MultiCohortStage):
         # get the expected outputs
         outputs = self.expected_outputs(mc)
 
-        annotated_snvs = inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools)
+        annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
         job.command(f'pm5_table -i {annotated_snvs} -o output')
         job.command(f'mv output.json {job.json}')
