@@ -4,7 +4,7 @@ from os.path import join
 
 from cpg_utils import Path, to_path
 from cpg_utils.config import config_retrieve
-from cpg_utils.hail_batch import authenticate_cloud_credentials_in_job, get_batch
+from cpg_utils.hail_batch import get_batch
 
 from cpg_flow.stage import MultiCohortStage, StageInput, StageOutput, stage
 from cpg_flow.targets import MultiCohort
@@ -56,7 +56,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
         return self.make_outputs(data=outputs, jobs=bash_job, target=mc)
 
 
-@stage(required_stages=CopyLatestClinvarFiles, analysis_type='custom', analysis_keys=['clinvar_decisions'])
+@stage(required_stages=[CopyLatestClinvarFiles], analysis_type='custom', analysis_keys=['clinvar_decisions'])
 class GenerateNewClinvarSummary(MultiCohortStage):
     def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
         """
@@ -71,7 +71,6 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         # relatively RAM intensive, short running task
         job = get_batch().new_job('Run ClinvArbitration Summary')
         job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
-        authenticate_cloud_credentials_in_job(job)
 
         # declare a resource group, leave the HT path implicit
         job.declare_resource_group(output={'vcf.bgz': '{root}.vcf.bgz', 'vcf.bgz.tbi': '{root}.vcf.bgz.tbi'})
@@ -101,7 +100,7 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
 
-@stage(required_stages=GenerateNewClinvarSummary)
+@stage(required_stages=[GenerateNewClinvarSummary])
 class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
     """
     take the vcf output from the clinvar stage, and apply consequence annotations
@@ -162,7 +161,6 @@ class Pm5TableGeneration(MultiCohortStage):
         # declare a resource group, but don't copy the whole thing back
         job = get_batch().new_job('Run ClinvArbitration PM5')
         job.image(config_retrieve(['workflow', 'driver_image']))
-        authenticate_cloud_credentials_in_job(job)
 
         # get the expected outputs
         outputs = self.expected_outputs(mc)
