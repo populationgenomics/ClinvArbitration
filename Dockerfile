@@ -12,11 +12,6 @@ RUN apt update && apt install -y \
     rm -r /var/lib/apt/lists/* && \
     rm -r /var/cache/apt/*
 
-# required to authenticate in analysis-runner driver (make this optional?)
-ADD https://sdk.cloud.google.com install_glcoud.sh
-RUN bash install_glcoud.sh --disable-prompts --install-dir=/opt && \
-    rm install_glcoud.sh
-
 # install bcftools
 RUN git clone --recurse-submodules https://github.com/samtools/htslib.git \
     && git clone https://github.com/samtools/bcftools.git \
