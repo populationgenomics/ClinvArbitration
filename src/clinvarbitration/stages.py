@@ -56,7 +56,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
         return self.make_outputs(data=outputs, jobs=bash_job, target=mc)
 
 
-@stage(required_stages=[CopyLatestClinvarFiles], analysis_type='custom', analysis_keys=['clinvar_decisions'])
+@stage(required_stages=[CopyLatestClinvarFiles], analysis_type='clinvarbitration', analysis_keys=['clinvar_decisions'])
 class GenerateNewClinvarSummary(MultiCohortStage):
     def expected_outputs(self, mc: MultiCohort) -> dict[str, Path]:
         """
