@@ -97,7 +97,7 @@ def main(input_tsv: str, output_root: str, assembly: str):
     json_out_path = f'{output_root}.json'
     with open(json_out_path, 'w') as f:
         for key, value in clinvar_dict.items():
-            new_dict = {'newkey': key, 'clinvar_alleles': '+'.join(value)}
+            new_dict = {'newkey': key, 'clinvar_alleles': '+'.join(sorted(value))}
             f.write(f'{json.dumps(new_dict)}\n')
 
     logging.info(f'JSON written to {json_out_path}')

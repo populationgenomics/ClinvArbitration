@@ -131,7 +131,9 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         # TODO check if this works correctly
         #  - it exists on a base mismatch between... VCF and reference? GFF3 and reference?
         # -e 'CHROM=="chrY"' is a partial solve, it just leaves the variants unannotated
-        job.command(f"""bcftools csq -f {ref_fasta} -e 'CHROM=="chrY"' -g {gff3} {snv_vcf} -o annotated_output.vcf""")
+        job.command(
+            f"""bcftools csq --local-csq -f {ref_fasta} -e 'CHROM=="chrY"' -g {gff3} {snv_vcf} -o annotated_output.vcf"""
+        )
 
         # split the bcftools CSQ fields, filter to missense, and write out a tab-delimited file
         # -d - duplicate, writes each transcript onto a new line
