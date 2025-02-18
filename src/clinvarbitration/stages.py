@@ -114,7 +114,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         outputs = self.expected_outputs(mc)
 
         # need a genome reference - mandatory argument
-        ref_fasta = get_batch().read_input(config_retrieve(['workflow', 'ref_fasta']))
+        ref_fa = get_batch().read_input(config_retrieve(['workflow', 'ref_fa']))
         snv_vcf = get_batch().read_input(inputs.as_str(mc, GenerateNewClinvarSummary, 'snv_vcf'))
 
         genome_build = config_retrieve(['workflow', 'genome_build'], 'GRCh38')
@@ -128,11 +128,10 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         job.storage('10G')
 
         # -g is the GFF3 file, -f is the reference fasta
-        # TODO check if this works correctly
-        #  - it exists on a base mismatch between... VCF and reference? GFF3 and reference?
+        # --local-csq is required to apply non-phase aware annotation
         # -e 'CHROM=="chrY"' is a partial solve, it just leaves the variants unannotated
         job.command(
-            f"""bcftools csq --local-csq -f {ref_fasta} -e 'CHROM=="chrY"' -g {gff3} {snv_vcf} -o annotated_output.vcf"""
+            f"""bcftools csq --local-csq -f {ref_fa} -e 'CHROM=="chrY"' -g {gff3} {snv_vcf} -o annotated_output.vcf""",
         )
 
         # split the bcftools CSQ fields, filter to missense, and write out a tab-delimited file
