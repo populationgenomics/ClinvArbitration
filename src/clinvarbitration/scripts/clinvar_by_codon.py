@@ -25,6 +25,10 @@ from collections import defaultdict
 
 import hail as hl
 
+
+# the schema to use for the Hail Table
+HAIL_SCHEMA = 'struct{newkey:str,clinvar_alleles:str}'
+
 # captures the number in amino_acid_changes, e.g. "334N>334T"
 # there's the potential to not have the last AA if it's a nonsense
 NUMBER_RE = re.compile(r'(\d+)\D>(\d+)\D?')
@@ -55,14 +59,14 @@ def cli_main():
     main(input_tsv=args.i, output_root=args.o, assembly=args.assembly)
 
 
-def main(input_tsv: str, output_root: str, assembly: str):
+def parse_tsv_into_dict(input_tsv: str) -> dict[str, set[str]]:
     """
-    parse the TSV, and create a re-indexed table
-
+    parse the TSV, and create the intermediate dictionary
     Args:
-        input_tsv (str): path to an input vcf
-        output_root ():
-        assembly (str): genome build to use
+        input_tsv (str): path to an input TSV
+
+    Returns:
+        dictionary of results,
     """
 
     # create a dictionary to store the re-parsed entries
@@ -92,6 +96,57 @@ def main(input_tsv: str, output_root: str, assembly: str):
 
             # record this clinvar entry as being associated with this transcript & codon
             clinvar_dict[transcript_key].add(clinvar_key)
+
+    return clinvar_dict
+
+
+def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_root: str, assembly: str) -> None:
+    """
+    write the dictionary to a Hail Table
+
+    Args:
+        clinvar_dict ():
+        output_root (str): path to write outputs to
+        assembly (str): genome build to use
+    """
+
+    # save the dictionary locally
+    json_out_path = f'{output_root}.json'
+    with open(json_out_path, 'w') as f:
+        for key, value in clinvar_dict.items():
+            new_dict = {'newkey': key, 'clinvar_alleles': '+'.join(sorted(value))}
+            f.write(f'{json.dumps(new_dict)}\n')
+
+    logging.info(f'JSON written to {json_out_path}')
+
+    # now set a schema to read that into a table... if you want hail
+    schema = hl.dtype(HAIL_SCHEMA)
+
+    # start the local hail runtime
+    hl.context.init_local(default_reference=assembly)
+
+    # import the table, and transmute to top-level attributes
+    ht = hl.import_table(json_out_path, no_header=True, types={'f0': schema})
+    ht = ht.transmute(**ht.f0)
+    ht = ht.key_by(ht.newkey)
+
+    # write out
+    ht.write(f'{output_root}.ht', overwrite=True)
+    logging.info(f'Hail Table written to {output_root}.ht')
+
+
+def main(input_tsv: str, output_root: str, assembly: str):
+    """
+    parse the TSV, and create a re-indexed table
+
+    Args:
+        input_tsv (str): path to an input vcf
+        output_root ():
+        assembly (str): genome build to use
+    """
+
+    # parse the TSV into a dictionary
+    clinvar_dict = parse_tsv_into_dict(input_tsv)
 
     # save the dictionary locally
     json_out_path = f'{output_root}.json'
