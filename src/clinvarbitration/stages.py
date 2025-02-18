@@ -129,9 +129,10 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
 
         # -g is the GFF3 file, -f is the reference fasta
         # --local-csq is required to apply non-phase aware annotation
+        # --force is required to use annotations without phase data
         # -e 'CHROM=="chrY"' is a partial solve, it just leaves the variants unannotated
         job.command(
-            f"""bcftools csq --local-csq -f {ref_fa} -e 'CHROM=="chrY"' -g {gff3} {snv_vcf} -o annotated_output.vcf""",
+            f"""bcftools csq --force --local-csq -f {ref_fa} -e 'CHROM=="chrY"' -g {gff3} {snv_vcf} -o out.vcf""",
         )
 
         # split the bcftools CSQ fields, filter to missense, and write out a tab-delimited file
@@ -139,7 +140,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         # -s :missense - only keep Consequence==missense variants
         # -f - format string - tab delimited, Transcript, Amino Acid Change, ClinVar allele ID, ClinVar gold stars
         job.command(
-            f'bcftools +split-vep annotated_output.vcf -d -s :missense -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" > {job.output}',  # noqa: E501
+            f'bcftools +split-vep out.vcf -d -s :missense -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" > {job.output}',  # noqa: E501
         )
 
         get_batch().write_output(job.output, str(outputs))
