@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from datetime import datetime
 from functools import cache
 from os.path import join
@@ -8,6 +9,7 @@ from cpg_utils.hail_batch import get_batch
 
 from cpg_flow.stage import MultiCohortStage, StageInput, StageOutput, stage
 from cpg_flow.targets import MultiCohort
+from cpg_flow.workflow import run_workflow
 
 
 @cache
@@ -249,3 +251,27 @@ class PackageForRelease(MultiCohortStage):
         )
         get_batch().write_output(job.output, str(tar_output))
         return self.make_outputs(multicohort, data=tar_output, jobs=job)
+
+
+def cli_main():
+    parser = ArgumentParser()
+    parser.add_argument('--dry-run', action='store_true', help='Print the commands that would be run')
+    args = parser.parse_args()
+    main(dry_run=args.dry_run)
+
+
+def main(dry_run: bool = False):
+    run_workflow(
+        stages=[
+            CopyLatestClinvarFiles,
+            GenerateNewClinvarSummary,
+            AnnotateClinvarSnvsWithBcftools,
+            Pm5TableGeneration,
+            PackageForRelease,
+        ],
+        dry_run=dry_run,
+    )
+
+
+if __name__ == '__main__':
+    cli_main()
