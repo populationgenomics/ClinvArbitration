@@ -88,13 +88,13 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         sub_file = get_batch().read_input(inputs.as_str(mc, CopyLatestClinvarFiles, 'submission_file'))
 
         # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
-        job.command(f'resummary -v {var_file} -s {sub_file} -o {job.output} --minimal {blacklist_string}')
+        job.command(f'resummary -v {var_file} -s {sub_file} -o {job.clinvar_decisions} --minimal {blacklist_string}')
 
         # copy out compressed
-        job.command(f'tar -czf {job.compressed} {job.output}.ht')
+        job.command(f'tar -czf {job.compressed} {job.clinvar_decisions}.ht')
 
         # selectively copy back some outputs
-        get_batch().write_output(job.output, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
+        get_batch().write_output(job.clinvar_decisions, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
         get_batch().write_output(job.compressed, str(outputs['clinvar_decisions']))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
@@ -169,12 +169,12 @@ class Pm5TableGeneration(MultiCohortStage):
 
         annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
-        job.command(f'pm5_table -i {annotated_snvs} -o output')
+        job.command(f'pm5_table -i {annotated_snvs} -o clinvar_pm5')
         job.command(f'mv output.json {job.json}')
         get_batch().write_output(job.json, str(outputs['pm5_json']))
 
         # compress the HT and remove as a single file
-        job.command(f'tar -czf {job.ht} output.ht')
+        job.command(f'tar -czf {job.ht} clinvar_pm5.ht')
         get_batch().write_output(job.ht, str(outputs['pm5_ht']))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
