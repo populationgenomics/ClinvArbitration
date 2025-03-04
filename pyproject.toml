@@ -25,7 +25,8 @@ classifiers=[
 dependencies=[
     'cpg-flow>=v0.1.2',
     'cpg-utils',
-    'hail>=0.2.133',
+    'google-cloud-storage==0.21.0',  # pin this to stop pip going crazy
+    'hail==0.2.133',  # should install the CPG fork if possible
     'pandas>=2.0.3',
     'pyspark>=3.3.3',
 ]
