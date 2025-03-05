@@ -1,5 +1,7 @@
 FROM python:3.10-bullseye
 
+ENV PYTHONDONTWRITEBYTECODE=1
+
 RUN apt update && apt install -y \
         apt-transport-https \
         bzip2 \
@@ -29,4 +31,5 @@ COPY example_script_docker.sh pyproject.toml README.md ./
 COPY src src/
 COPY bcftools_data bcftools_data/
 
-RUN pip install .
+# pip install but don't retain the cache files
+RUN pip install --no-cache-dir .
