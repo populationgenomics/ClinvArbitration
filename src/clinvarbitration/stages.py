@@ -244,7 +244,7 @@ class PackageForRelease(MultiCohortStage):
             mv {pm5_json} clinvarbitration_data/pm5.json
             tar -xzf {pm5_ht} -C clinvarbitration_data
             tar -xzf {decisions_ht} -C clinvarbitration_data
-            tar -czf {job.output} clinvarbitration_data/clinvar_decisions.ht \ 
+            tar -czf {job.output} clinvarbitration_data/clinvar_decisions.ht \
                 clinvarbitration_data/annotated_snvs.tsv \
                 clinvarbitration_data/pm5.json \
                 clinvarbitration_data/clinvar_pm5.ht

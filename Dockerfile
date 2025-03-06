@@ -1,8 +1,11 @@
-FROM python:3.10-bullseye
+# Any analysis-runner driver image must at least include git.
+ARG PY_VER=${PY_VER:-3.10}
+
+FROM python:${PY_VER}-slim-bullseye AS basic
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
-RUN apt update && apt install -y \
+RUN apt update && apt install --no-install-recommends -y \
         apt-transport-https \
         bzip2 \
         ca-certificates \
