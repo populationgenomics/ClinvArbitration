@@ -4,3 +4,7 @@ venv
 *.egg-info/
 hail-*
 .git
+nextflow_outputs
+work
+test
+*.log*
