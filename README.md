@@ -39,7 +39,7 @@ The Docker Image contains a Nextflow installation, so the workflow can be run as
 ```bash
 docker run \
     -v /dir/results:/results \
-    -v /dir/ref_genomes:/refgenomes \
+    -v /dir/ref_genomes:/refgenomes:ro \
     clinvarbitration:local \
     nextflow -c nextflow/nextflow.config \
     run nextflow/clinvarbitration.nf \
