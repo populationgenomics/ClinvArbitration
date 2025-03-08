@@ -11,7 +11,9 @@ process ResummariseRawSubmissions {
     output:
         path "clinvar_decisions.json", emit: "json"
         path "clinvar_decisions.vcf.bgz", emit: "vcf"
-        path "clinvar_decisions_unfiltered.vcf.bgz", emit: "vcf_all"
+        path "clinvar_decisions.vcf.bgz.tbi", emit: "vcf_idx"
+        path "clinvar_decisions.unfiltered.vcf.bgz", emit: "vcf_all"
+        path "clinvar_decisions.unfiltered.vcf.bgz.tbi", emit: "vcf_all_idx"
         path "clinvar_decisions.ht.tar.gz", emit: "ht_tar"
 
     // Generates

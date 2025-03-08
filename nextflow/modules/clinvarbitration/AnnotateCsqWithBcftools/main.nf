@@ -9,11 +9,12 @@ process AnnotateCsqWithBcftools {
         path ref_fa
 
     output:
-        path "annotated_snv.tsv", emit: "tsv"
+        path "clinvar_decisions.annotated.tsv", emit: "tsv"
 
     """
     bcftools csq \
         -f "${ref_fa}" \
+        -e 'CHROM=="chrY"' \
         -g "${params.gff3}" \
         "${vcf}" \
         -o temp_annotated_output.vcf
@@ -22,6 +23,6 @@ process AnnotateCsqWithBcftools {
         -d \
         -s :missense \
         -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" \
-        > annotated_snv.tsv
+        > clinvar_decisions.annotated.tsv
     """
 }

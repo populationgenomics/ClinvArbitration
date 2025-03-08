@@ -9,16 +9,16 @@ process PackageForRelease {
         path pm5_json
 
     output:
-        path "clinvarbitration_data.tar.gz"
+        path "clinvar_decisions.release.tar.gz"
 
-    //
+    // create a new folder, decompress the previous archives, and recompress everything together
     """
     mkdir clinvarbitration_data
     tar -xzf "${pm5_ht_tar}" -C clinvarbitration_data
     tar -xzf "${decisions_ht_tar}" -C clinvarbitration_data
-    tar -czf clinvarbitration_data.tar.gz \
+    tar -czf clinvar_decisions.release.tar.gz \
         clinvarbitration_data/clinvar_decisions.ht \
-        clinvarbitration_data/clinvar_pm5.ht \
+        clinvarbitration_data/clinvar_decisions.pm5.ht \
         "${pm5_json}"
     """
 }

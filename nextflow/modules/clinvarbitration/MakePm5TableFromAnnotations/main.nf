@@ -7,13 +7,13 @@ process MakePm5TableFromAnnotations {
         path annotated_snv
 
     output:
-        path "clinvar_pm5.json", emit: "json"
-        path "clinvar_pm5.ht.tar.gz", emit: "ht_tar"
+        path "clinvar_decisions.pm5.json", emit: "json"
+        path "clinvar_decisions.pm5.ht.tar.gz", emit: "ht_tar"
 
     """
     pm5_table \
-        -i "${annotated_snv}" -o clinvar_pm5
+        -i "${annotated_snv}" -o clinvar_decisions.pm5
 
-    tar -czf "clinvar_pm5.ht.tar.gz" clinvar_pm5.ht
+    tar -czf "clinvar_decisions.pm5.ht.tar.gz" clinvar_decisions.pm5.ht
     """
 }

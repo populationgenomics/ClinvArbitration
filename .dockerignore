@@ -1,10 +1,10 @@
 build
-data
 venv
 *.egg-info/
 hail-*
 .git
-nextflow_outputs
 work
 test
 *.log*
+*_results
+*_outputs
