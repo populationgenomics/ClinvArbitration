@@ -8,6 +8,7 @@ on:
       tag:
         description: 'Tag to use (defaults to "test")'
         default: "test"
+  pull_request:
 
 permissions:
   id-token: write
@@ -63,6 +64,12 @@ jobs:
 
       - name: manually triggered build
         if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' }}
+        run: |
+          docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
+          docker push $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
+
+      - name: Pull Request triggered build
+        if: ${{ github.event_name == 'pull_request' && github.ref_name != 'main' }}
         run: |
           docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
           docker push $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
