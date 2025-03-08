@@ -2,7 +2,6 @@ from datetime import datetime
 from functools import cache
 from os.path import join
 
-from cpg_flow.utils import ExpectedResultT
 from cpg_utils import Path, to_path
 from cpg_utils.config import config_retrieve
 from cpg_utils.hail_batch import get_batch
@@ -319,7 +318,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
                 'unfiltered.vcf.bgz.tbi': '{root}/clinvar_decisions.unfiltered.vcf.bgz.tbi',
                 'annotated.tsv': '{root}/clinvar_decisions.annotated.tsv',
                 'release.tar.gz': '{root}/clinvar_decisions.release.tar.gz',
-            }
+            },
         )
 
         # nextflow go brrrr
@@ -330,7 +329,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
                 run nextflow/clinvarbitration.nf \
                 --ref_fa {ref_fa} \
                 --output_dir {job.output}
-            """
+            """,
         )
 
         # copy the outputs back, in one smooooooth motion
