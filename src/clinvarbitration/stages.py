@@ -300,6 +300,8 @@ class ClinvarbitrationNextflow(MultiCohortStage):
         # make a new job
         job = get_batch().new_job('Run ClinvArbitration Nextflow')
 
+        job.image(config_retrieve(['workflow', 'driver_image']))
+
         # set some resource params
         job.storage('10Gi').memory('highmem').cpu(2)
 
