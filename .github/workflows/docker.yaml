@@ -54,22 +54,22 @@ jobs:
 
       - name: build
         run: |
-          docker build . -f Dockerfile --tag $IMAGE_NAME:${{ github.sha }}
+          docker build . -f Dockerfile --tag ${{env.IMAGE_NAME}}:${{ github.sha }}
 
       - name: push latest
         if: ${{ github.ref_name == 'main' }}
         run: |
-          docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_MAIN/$IMAGE_NAME:$VERSION
-          docker push $DOCKER_MAIN/$IMAGE_NAME:$VERSION
+          docker tag ${{env.IMAGE_NAME}}:${{ github.sha }} ${{env.DOCKER_MAIN}}/${{env.IMAGE_NAME}}:$VERSION
+          docker push ${{env.DOCKER_MAIN}}/${{env.IMAGE_NAME}}:$VERSION
 
       - name: manually triggered build
         if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' }}
         run: |
-          docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
-          docker push $DOCKER_TMP/$IMAGE_NAME:${{github.event.inputs.tag}}
+          docker tag ${{env.IMAGE_NAME}}:${{ github.sha }} ${{env.DOCKER_TMP}}/${{env.IMAGE_NAME}}:${{github.event.inputs.tag}}
+          docker push ${{env.DOCKER_TMP}}/${{env.IMAGE_NAME}}:${{github.event.inputs.tag}}
 
       - name: Pull Request triggered build
         if: ${{ github.event_name == 'pull_request' && github.ref_name != 'main' }}
         run: |
-          docker tag $IMAGE_NAME:${{ github.sha }} $DOCKER_TMP/$IMAGE_NAME:PR_${{github.event.number}}
-          docker push $DOCKER_TMP/$IMAGE_NAME:PR_{{github.event.number}}
+          docker tag ${{env.IMAGE_NAME}}:${{ github.sha }} ${{env.DOCKER_TMP}}/${{env.IMAGE_NAME}}:PR_${{github.event.number}}
+          docker push ${{env.DOCKER_TMP}}/${{env.IMAGE_NAME}}:PR_{{github.event.number}}
