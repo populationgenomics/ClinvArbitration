@@ -94,7 +94,9 @@ class GenerateNewClinvarSummary(MultiCohortStage):
 
         # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
         job.command(f'resummary -v {var_file} -s {sub_file} -o {job.output} --minimal {blacklist_string}')
-        job.command(f'tar -czf {job.output}.ht.tar.gz {job.output}.ht')
+
+        # don't tar from current location, we'll catch all the tmp pathing
+        job.command(f'mv {job.output}.ht clinvar_decisions.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.ht')
 
         # selectively copy back some outputs
         get_batch().write_output(job.output, str(outputs['clinvar_decisions']).removesuffix('.ht.tar.gz'))
@@ -175,7 +177,9 @@ class Pm5TableGeneration(MultiCohortStage):
         job.command(f'pm5_table -i {annotated_snvs} -o {job.output}')
 
         # compress the HT and remove as a single file
-        job.command(f'tar -czf {job.output}.ht.tar.gz {job.output}.ht')
+        job.command(
+            f'mv {job.output}.ht clinvar_decisions.pm5.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.pm5.ht'
+        )
 
         # write both outputs together
         get_batch().write_output(job.output, str(outputs['pm5_json']).removesuffix('.pm5.json'))
