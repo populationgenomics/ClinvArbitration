@@ -14,7 +14,6 @@ process AnnotateCsqWithBcftools {
     """
     bcftools csq \
         -f "${ref_fa}" \
-        -e 'CHROM=="chrY"' \
         -g "${params.gff3}" \
         "${vcf}" \
         -o temp_annotated_output.vcf
