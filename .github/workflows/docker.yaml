@@ -8,6 +8,7 @@ on:
       tag:
         description: 'Tag to use (defaults to "test")'
         default: "test"
+  pull_request:
 
 permissions:
   id-token: write
@@ -53,7 +54,7 @@ jobs:
 
       - name: build
         run: |
-          docker build . -f Dockerfile --tag ${{env.IMAGE_NAME}}:${{ github.sha }}
+          docker build ".[cpg]" -f Dockerfile --tag ${{env.IMAGE_NAME}}:${{ github.sha }}
 
       - name: push latest
         if: ${{ github.ref_name == 'main' }}
