@@ -88,12 +88,11 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         sub_file = get_batch().read_input(inputs.as_str(mc, CopyLatestClinvarFiles, 'submission_file'))
 
         # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
-        job.command(f'resummary -v {var_file} -s {sub_file} -o {job.clinvar_decisions} --minimal {blacklist_string}')
+        job.command(f'resummary -v {var_file} -s {sub_file} -o clinvar_decisions --minimal {blacklist_string}')
 
-        # copy out compressed
-        # this has to be done in a dodgy way because the BATCH_TMP dir starts with a /
-        # and tar won't let you include files with an absolute path
-        job.command(f'cd $BATCH_TMPDIR && tar -czf {job.compressed} clinvar_decisions.ht')
+        job.command(f'tar -czf {job.compressed} clinvar_decisions.ht')
+        job.command(f'mv clinvar_decisions.vcf.bgz {job.clinvar_decisions}.vcf.bgz')
+        job.command(f'mv clinvar_decisions.vcf.bgz.tbi {job.clinvar_decisions}.vcf.bgz.tbi')
 
         # selectively copy back some outputs
         get_batch().write_output(job.clinvar_decisions, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
