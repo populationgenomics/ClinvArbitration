@@ -91,11 +91,11 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         job.command(f'resummary -v {var_file} -s {sub_file} -o clinvar_decisions --minimal {blacklist_string}')
 
         job.command(f'tar -czf {job.compressed} clinvar_decisions.ht')
-        job.command(f'mv clinvar_decisions.vcf.bgz {job.clinvar_decisions}.vcf.bgz')
-        job.command(f'mv clinvar_decisions.vcf.bgz.tbi {job.clinvar_decisions}.vcf.bgz.tbi')
+        job.command(f'mv clinvar_decisions.vcf.bgz {job.output}.vcf.bgz')
+        job.command(f'mv clinvar_decisions.vcf.bgz.tbi {job.output}.vcf.bgz.tbi')
 
         # selectively copy back some outputs
-        get_batch().write_output(job.clinvar_decisions, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
+        get_batch().write_output(job.output, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
         get_batch().write_output(job.compressed, str(outputs['clinvar_decisions']))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
