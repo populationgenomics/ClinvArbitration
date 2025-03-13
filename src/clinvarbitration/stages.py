@@ -72,9 +72,6 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         job = get_batch().new_job('GenerateNewClinvarSummary')
         job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
 
-        # declare a resource group, leave the HT path implicit
-        job.declare_resource_group(output={'vcf.bgz': '{root}.vcf.bgz', 'vcf.bgz.tbi': '{root}.vcf.bgz.tbi'})
-
         # get the expected outputs
         outputs = self.expected_outputs(mc)
 
