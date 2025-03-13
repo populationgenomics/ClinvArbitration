@@ -64,7 +64,7 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         """
         return {
             'clinvar_decisions': get_output_folder() / 'clinvar_decisions.ht.tar.gz',
-            'snv_vcf': get_output_folder() / 'pathogenic_snvs.vcf.bgz',
+            'snv_vcf': get_output_folder() / 'clinvar_decisions.vcf.bgz',
         }
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
@@ -87,16 +87,20 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         var_file = get_batch().read_input(inputs.as_str(mc, CopyLatestClinvarFiles, 'variant_file'))
         sub_file = get_batch().read_input(inputs.as_str(mc, CopyLatestClinvarFiles, 'submission_file'))
 
-        # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
-        job.command(f'resummary -v {var_file} -s {sub_file} -o clinvar_decisions --minimal {blacklist_string}')
+        job.declare_resource_group(
+            output={
+                'ht.tar.gz': '{root}.ht.tar.gz',
+                'vcf.bgz': '{root}.vcf.bgz',
+                'vcf.bgz.tbi': '{root}.vcf.bgz.tbi',
+            },
+        )
 
-        job.command(f'tar -czf {job.compressed} clinvar_decisions.ht')
-        job.command(f'mv clinvar_decisions.vcf.bgz {job.output}.vcf.bgz')
-        job.command(f'mv clinvar_decisions.vcf.bgz.tbi {job.output}.vcf.bgz.tbi')
+        # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
+        job.command(f'resummary -v {var_file} -s {sub_file} -o {job.output} --minimal {blacklist_string}')
+        job.command(f'tar -czf {job.output}.ht.tar.gz {job.output}.ht')
 
         # selectively copy back some outputs
-        get_batch().write_output(job.output, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
-        get_batch().write_output(job.compressed, str(outputs['clinvar_decisions']))
+        get_batch().write_output(job.output, str(outputs['clinvar_decisions']).removesuffix('.ht.tar.gz'))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
@@ -109,7 +113,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
     """
 
     def expected_outputs(self, mc: MultiCohort) -> Path:
-        return get_output_folder() / 'annotated_snv.tsv'
+        return get_output_folder() / 'clinvar_decisions.annotated.tsv'
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
         outputs = self.expected_outputs(mc)
@@ -155,12 +159,11 @@ class Pm5TableGeneration(MultiCohortStage):
         a single HT, compressed into a tarball
         """
         return {
-            'pm5_ht': get_output_folder() / 'clinvar_pm5.ht.tar.gz',
-            'pm5_json': get_output_folder() / 'clinvar_pm5.json',
+            'pm5_ht': get_output_folder() / 'clinvar_decisions.pm5.ht.tar.gz',
+            'pm5_json': get_output_folder() / 'clinvar_decisions.pm5.json',
         }
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
-        # declare a resource group, but don't copy the whole thing back
         job = get_batch().new_job('Pm5TableGeneration')
         job.image(config_retrieve(['workflow', 'driver_image']))
 
@@ -169,13 +172,16 @@ class Pm5TableGeneration(MultiCohortStage):
 
         annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
-        job.command(f'pm5_table -i {annotated_snvs} -o clinvar_pm5')
-        job.command(f'mv output.json {job.json}')
-        get_batch().write_output(job.json, str(outputs['pm5_json']))
+        job.declare_resource_group(output={'ht.tar.gz': '{root}.ht.tar.gz', 'json': '{root}.json'})
+
+        # write both HT and JSON outputs to the same root location
+        job.command(f'pm5_table -i {annotated_snvs} -o {job.output}')
 
         # compress the HT and remove as a single file
-        job.command(f'tar -czf {job.ht} clinvar_pm5.ht')
-        get_batch().write_output(job.ht, str(outputs['pm5_ht']))
+        job.command(f'tar -czf {job.output}.ht.tar.gz {job.output}.ht')
+
+        # write both outputs together
+        get_batch().write_output(job.output, str(outputs['pm5_json']).removesuffix('.pm5.json'))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
@@ -212,7 +218,7 @@ class PackageForRelease(MultiCohortStage):
     """
 
     def expected_outputs(self, multicohort: MultiCohort) -> Path:
-        return get_output_folder() / 'clinvarbitration.tar.gz'
+        return get_output_folder() / 'clinvar_decisions.release.tar.gz'
 
     def queue_jobs(self, multicohort: MultiCohort, inputs: StageInput) -> StageOutput:
         """
@@ -240,14 +246,14 @@ class PackageForRelease(MultiCohortStage):
         job.command(
             f"""
             mkdir clinvarbitration_data
-            mv {annotated_tsv} clinvarbitration_data/annotated_snvs.tsv
-            mv {pm5_json} clinvarbitration_data/pm5.json
+            mv {annotated_tsv} clinvarbitration_data/clinvar_decisions.annotated.tsv
+            mv {pm5_json} clinvarbitration_data/clinvar_decisions.pm5.json
             tar -xzf {pm5_ht} -C clinvarbitration_data
             tar -xzf {decisions_ht} -C clinvarbitration_data
             tar -czf {job.output} clinvarbitration_data/clinvar_decisions.ht \
-                clinvarbitration_data/annotated_snvs.tsv \
-                clinvarbitration_data/pm5.json \
-                clinvarbitration_data/clinvar_pm5.ht
+                clinvarbitration_data/clinvar_decisions.annotated.tsv \
+                clinvarbitration_data/clinvar_decisions.pm5.json \
+                clinvarbitration_data/clinvar_decisions.pm5.ht
         """,
         )
         get_batch().write_output(job.output, str(tar_output))
@@ -263,6 +269,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
     """
     Instead of us running this one way, and off-site users running it another way,
     this single stage executes the full NextFlow workflow
+    We don't have to use this, but we should run it alongside our main workflow to ensure both are working
     """
 
     def expected_outputs(
