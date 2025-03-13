@@ -38,7 +38,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
         """
         run a wget copy of the relevant files into GCP
         """
-        bash_job = get_batch().new_bash_job('wget latest ClinVar raw files')
+        bash_job = get_batch().new_bash_job('CopyLatestClinvarFiles')
         bash_job.image(config_retrieve(['workflow', 'driver_image']))
 
         directory = 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/'
@@ -69,7 +69,7 @@ class GenerateNewClinvarSummary(MultiCohortStage):
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
         # relatively RAM intensive, short running task
-        job = get_batch().new_job('Run ClinvArbitration Summary')
+        job = get_batch().new_job('GenerateNewClinvarSummary')
         job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
 
         # declare a resource group, leave the HT path implicit
@@ -91,7 +91,9 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         job.command(f'resummary -v {var_file} -s {sub_file} -o {job.clinvar_decisions} --minimal {blacklist_string}')
 
         # copy out compressed
-        job.command(f'tar -czf {job.compressed} {job.clinvar_decisions}.ht')
+        # this has to be done in a dodgy way because the BATCH_TMP dir starts with a /
+        # and tar won't let you include files with an absolute path
+        job.command(f'cd $BATCH_TMP && tar -czf {job.compressed} clinvar_decisions.ht')
 
         # selectively copy back some outputs
         get_batch().write_output(job.clinvar_decisions, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
@@ -123,7 +125,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
 
         gff3 = f'/clinvarbitration/bcftools_data/{genome_build}.gff3.gz'
 
-        job = get_batch().new_job('Annotate Clinvar SNVs with BCFtools', attributes={'tool': 'bcftools'})
+        job = get_batch().new_job('AnnotateClinvarSnvsWithBcftools', attributes={'tool': 'bcftools'})
         job.image(config_retrieve(['workflow', 'driver_image']))
         job.storage('10G')
 
@@ -160,7 +162,7 @@ class Pm5TableGeneration(MultiCohortStage):
 
     def queue_jobs(self, mc: MultiCohort, inputs: StageInput) -> StageOutput:
         # declare a resource group, but don't copy the whole thing back
-        job = get_batch().new_job('Run ClinvArbitration PM5')
+        job = get_batch().new_job('Pm5TableGeneration')
         job.image(config_retrieve(['workflow', 'driver_image']))
 
         # get the expected outputs
@@ -220,7 +222,7 @@ class PackageForRelease(MultiCohortStage):
         """
         tar_output = self.expected_outputs(multicohort)
 
-        job = get_batch().new_job('Package ClinvArbitration data for release')
+        job = get_batch().new_job('PackageForRelease')
         job.storage('10G')
         job.image(config_retrieve(['workflow', 'driver_image']))
 
