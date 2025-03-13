@@ -54,7 +54,7 @@ jobs:
 
       - name: build
         run: |
-          docker build ".[cpg]" -f Dockerfile --tag ${{env.IMAGE_NAME}}:${{ github.sha }}
+          docker build . -f Dockerfile --tag ${{env.IMAGE_NAME}}:${{ github.sha }}
 
       - name: push latest
         if: ${{ github.ref_name == 'main' }}
