@@ -93,7 +93,7 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         # copy out compressed
         # this has to be done in a dodgy way because the BATCH_TMP dir starts with a /
         # and tar won't let you include files with an absolute path
-        job.command(f'cd $BATCH_TMP && tar -czf {job.compressed} clinvar_decisions.ht')
+        job.command(f'cd $BATCH_TMPDIR && tar -czf {job.compressed} clinvar_decisions.ht')
 
         # selectively copy back some outputs
         get_batch().write_output(job.clinvar_decisions, str(outputs['snv_vcf']).removesuffix('.vcf.bgz'))
