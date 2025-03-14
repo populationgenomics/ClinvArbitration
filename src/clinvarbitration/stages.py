@@ -171,7 +171,7 @@ class Pm5TableGeneration(MultiCohortStage):
 
         annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
-        job.declare_resource_group(output={'pm5.ht.tar.gz': '{root}.pm5.ht.tar.gz', 'json': '{root}.json'})
+        job.declare_resource_group(output={'pm5.ht.tar.gz': '{root}.pm5.ht.tar.gz', 'pm5.json': '{root}.json'})
 
         # write both HT and JSON outputs to the same root location
         job.command(f'pm5_table -i {annotated_snvs} -o {job.output}')
