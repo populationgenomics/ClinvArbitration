@@ -11,9 +11,6 @@ RUN apt update && apt install --no-install-recommends -y \
         ca-certificates \
         git \
         gnupg \
-        libbz2-1.0 \
-        libcurl4 \
-        liblzma5 \
         openjdk-17-jdk-headless \
         wget \
         zip && \
@@ -57,5 +54,3 @@ COPY pyproject.toml README.md ./
 
 # pip install but don't retain the cache files
 RUN pip install --no-cache-dir ".[cpg]"
-
-COPY nextflow nextflow/
