@@ -11,6 +11,9 @@ RUN apt update && apt install --no-install-recommends -y \
         ca-certificates \
         git \
         gnupg \
+        libbz2-1.0 \
+        libcurl4 \
+        liblzma5 \
         openjdk-17-jdk-headless \
         wget \
         zip && \
