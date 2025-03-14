@@ -171,14 +171,15 @@ class Pm5TableGeneration(MultiCohortStage):
 
         annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
-        job.declare_resource_group(output={'ht.tar.gz': '{root}.ht.tar.gz', 'json': '{root}.json'})
+        job.declare_resource_group(output={'pm5.ht.tar.gz': '{root}.pm5.ht.tar.gz', 'json': '{root}.json'})
 
         # write both HT and JSON outputs to the same root location
         job.command(f'pm5_table -i {annotated_snvs} -o {job.output}')
 
         # compress the HT and remove as a single file
         job.command(
-            f'mv {job.output}.ht clinvar_decisions.pm5.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.pm5.ht',
+            f'mv {job.output}.ht clinvar_decisions.pm5.ht && '
+            f'tar -czf {job.output}.pm5.ht.tar.gz clinvar_decisions.pm5.ht',
         )
 
         # write both outputs together
@@ -251,9 +252,10 @@ class PackageForRelease(MultiCohortStage):
             mv {pm5_json} clinvarbitration_data/clinvar_decisions.pm5.json
             tar -xzf {pm5_ht} -C clinvarbitration_data
             tar -xzf {decisions_ht} -C clinvarbitration_data
-            tar -czf {job.output} clinvarbitration_data/clinvar_decisions.ht \
+            tar -czf {job.output} \
                 clinvarbitration_data/clinvar_decisions.annotated.tsv \
                 clinvarbitration_data/clinvar_decisions.pm5.json \
+                clinvarbitration_data/clinvar_decisions.ht \
                 clinvarbitration_data/clinvar_decisions.pm5.ht
         """,
         )
