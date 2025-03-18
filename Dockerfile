@@ -57,7 +57,6 @@ RUN wget get.nextflow.io -O nextflow && \
 # now do some fun stuff, installing ClinvArbitration
 WORKDIR /clinvarbitration
 
-COPY bcftools_data bcftools_data/
 COPY src src/
 COPY pyproject.toml README.md ./
 
