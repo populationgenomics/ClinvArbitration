@@ -178,7 +178,7 @@ class Pm5TableGeneration(MultiCohortStage):
 
         # compress the HT and remove as a single file
         job.command(
-            f'mv {job.output}.ht clinvar_decisions.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.ht',
+            f'mv {job.output}.ht clinvar_decisions.pm5.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.pm5.ht',
         )
 
         # write both outputs together
