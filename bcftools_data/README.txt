@@ -1,4 +1,9 @@
-These files were downloaded from the Ensembl FTP sites 6th February 2025. They are stored off-chain using git lfs. To download these files, either install git-lfs locally (which will automatically populate them when this repository is cloned), or visit the Ensembl FTP sites:
+These files were downloaded from the Ensembl FTP sites 6th February 2025. They are stored off-chain using git lfs, and I
+planned to make that the default distribution method for the files. However, I've since realised that git-lfs has quite
+a limited default quota, and you sourcing these files separately from ensembl is far simpler.
+
+To download these files, either install git-lfs locally (which will automatically populate them when this repository is
+cloned, assuming we are within data caps), or visit the Ensembl FTP sites:
 
 GRCh38:
 
