@@ -340,7 +340,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
             f"""
             nextflow \
                 -c nextflow/nextflow.config \
-                run main.nf \
+                run nextflow/clinvarbitration.nf \
                 --ref_fa {ref_fa} \
                 --output_dir {job.output} \
                 --gff3 {gff3}
