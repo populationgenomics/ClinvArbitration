@@ -49,8 +49,8 @@ COPY --from=bcftools_compiler /bcftools_install/usr/local/libexec/bcftools/* /us
 FROM base_bcftools AS now_build_clinvarbitration
 
 # install nextflow
-ADD https://get.nextflow.io nextflow
-RUN chmod +x nextflow && \
+RUN wget get.nextflow.io -O nextflow && \
+	chmod +x nextflow && \
     mv nextflow /usr/bin && \
     nextflow self-update
 
