@@ -171,19 +171,18 @@ class Pm5TableGeneration(MultiCohortStage):
 
         annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
-        job.declare_resource_group(output={'pm5.ht.tar.gz': '{root}.pm5.ht.tar.gz', 'pm5.json': '{root}.pm5.json'})
+        job.declare_resource_group(output={'ht.tar.gz': '{root}.ht.tar.gz', 'json': '{root}.json'})
 
         # write both HT and JSON outputs to the same root location
         job.command(f'pm5_table -i {annotated_snvs} -o {job.output}')
 
         # compress the HT and remove as a single file
         job.command(
-            f'mv {job.output}.ht clinvar_decisions.pm5.ht && '
-            f'tar -czf {job.output}.pm5.ht.tar.gz clinvar_decisions.pm5.ht',
+            f'mv {job.output}.ht clinvar_decisions.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.ht',
         )
 
         # write both outputs together
-        get_batch().write_output(job.output, str(outputs['pm5_json']).removesuffix('.pm5.json'))
+        get_batch().write_output(job.output, str(outputs['pm5_json']).removesuffix('.json'))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
