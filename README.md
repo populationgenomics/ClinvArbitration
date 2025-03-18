@@ -43,7 +43,7 @@ docker run \
     -v /dir/ref_genomes:/refgenomes:ro \
     clinvarbitration:local \
     nextflow -c nextflow/nextflow.config \
-    run nextflow/main.nf \
+    run main.nf \
     --ref_fa /refgenomes/hg38.fa \
     --output_dir /results
 ```
