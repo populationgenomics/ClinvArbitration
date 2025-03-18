@@ -125,7 +125,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         if genome_build not in ['GRCh37', 'GRCh38']:
             raise ValueError('Unsupported genome build specified')
 
-        gff3 = f'/clinvarbitration/bcftools_data/{genome_build}.gff3.gz'
+        gff3 = get_batch().read_input(config_retrieve(['references', 'ensembl_113', 'gff3']))
 
         job = get_batch().new_job('AnnotateClinvarSnvsWithBcftools', attributes={'tool': 'bcftools'})
         job.image(config_retrieve(['workflow', 'driver_image']))
@@ -171,19 +171,18 @@ class Pm5TableGeneration(MultiCohortStage):
 
         annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
-        job.declare_resource_group(output={'pm5.ht.tar.gz': '{root}.pm5.ht.tar.gz', 'pm5.json': '{root}.json'})
+        job.declare_resource_group(output={'ht.tar.gz': '{root}.ht.tar.gz', 'json': '{root}.json'})
 
         # write both HT and JSON outputs to the same root location
         job.command(f'pm5_table -i {annotated_snvs} -o {job.output}')
 
         # compress the HT and remove as a single file
         job.command(
-            f'mv {job.output}.ht clinvar_decisions.pm5.ht && '
-            f'tar -czf {job.output}.pm5.ht.tar.gz clinvar_decisions.pm5.ht',
+            f'mv {job.output}.ht clinvar_decisions.pm5.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.pm5.ht',
         )
 
         # write both outputs together
-        get_batch().write_output(job.output, str(outputs['pm5_json']).removesuffix('.pm5.json'))
+        get_batch().write_output(job.output, str(outputs['pm5_json']).removesuffix('.json'))
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
@@ -261,3 +260,94 @@ class PackageForRelease(MultiCohortStage):
         )
         get_batch().write_output(job.output, str(tar_output))
         return self.make_outputs(multicohort, data=tar_output, jobs=job)
+
+
+@stage(
+    analysis_keys=['release.tar.gz'],
+    analysis_type='clinvarbitration',
+    update_analysis_meta=populate_job_meta,
+)
+class ClinvarbitrationNextflow(MultiCohortStage):
+    """
+    Instead of us running this one way, and off-site users running it another way,
+    this single stage executes the full NextFlow workflow
+    We don't have to use this, but we should run it alongside our main workflow to ensure both are working
+    """
+
+    def expected_outputs(
+        self,
+        multicohort: MultiCohort,
+    ) -> dict[str, Path]:
+        return {
+            'submission_raw.txt.gz': get_output_folder() / 'clinvar_decisions.submission_raw.txt.gz',
+            'variant_raw.txt.gz': get_output_folder() / 'clinvar_decisions.variant_raw.txt.gz',
+            'ht.tar.gz': get_output_folder() / 'clinvar_decisions.ht.tar.gz',
+            'pm5.ht.tar.gz': get_output_folder() / 'clinvar_decisions.pm5.ht.tar.gz',
+            'vcf.bgz': get_output_folder() / 'clinvar_decisions.vcf.bgz',
+            'release.tar.gz': get_output_folder() / 'clinvar_decisions.release.tar.gz',
+        }
+
+    def queue_jobs(
+        self,
+        multicohort: MultiCohort,
+        inputs: StageInput,
+    ) -> StageOutput:
+        """
+
+        Args:
+            multicohort ():
+            inputs ():
+
+        Returns:
+
+        """
+
+        outputs = self.expected_outputs(multicohort)
+
+        # read in a reference genome
+        ref_fa = get_batch().read_input(config_retrieve(['workflow', 'ref_fa']))
+
+        # make a new job
+        job = get_batch().new_job('Run ClinvArbitration Nextflow')
+
+        job.image(config_retrieve(['workflow', 'driver_image']))
+
+        # set some resource params
+        job.storage('10Gi').memory('highmem').cpu(2)
+
+        # set up one sprawling output group for all workflow results
+        job.declare_resource_group(
+            output={
+                'submission_raw.txt.gz': '{root}/submission_summary.txt.gz',
+                'variant_raw.txt.gz': '{root}/variant_summary.txt.gz',
+                'clinvar_decisions.json': '{root}/clinvar_decisions.json',
+                'ht.tar.gz': '{root}/clinvar_decisions.ht.tar.gz',
+                'pm5.ht.tar.gz': '{root}/clinvar_decisions.pm5.ht.tar.gz',
+                'pm5.json': '{root}/clinvar_decisions.pm5.json',
+                'vcf.bgz': '{root}/clinvar_decisions.vcf.bgz',
+                'vcf.bgz.tbi': '{root}/clinvar_decisions.vcf.bgz.tbi',
+                'unfiltered.vcf.bgz': '{root}/clinvar_decisions.unfiltered.vcf.bgz',
+                'unfiltered.vcf.bgz.tbi': '{root}/clinvar_decisions.unfiltered.vcf.bgz.tbi',
+                'annotated.tsv': '{root}/clinvar_decisions.annotated.tsv',
+                'release.tar.gz': '{root}/clinvar_decisions.release.tar.gz',
+            },
+        )
+
+        gff3 = get_batch().read_input(config_retrieve(['references', 'ensembl_113', 'gff3']))
+
+        # nextflow go brrrr
+        job.command(
+            f"""
+            nextflow \
+                -c nextflow/nextflow.config \
+                run nextflow/clinvarbitration.nf \
+                --ref_fa {ref_fa} \
+                --output_dir {job.output} \
+                --gff3 {gff3}
+            """,
+        )
+
+        # copy the outputs back, in one smooooooth motion
+        get_batch().write_output(job.output, str(outputs['release.tar.gz']).removesuffix('.release.tar.gz'))
+
+        return self.make_outputs(multicohort, data=outputs, jobs=job)

@@ -26,9 +26,33 @@ Before cloning this repository, install [git-lfs](https://github.com/git-lfs/git
 
 If git-lfs is not available, the relevant GFF3 files can be easily downloaded from the Ensembl FTP site as  documented in the README.
 
+
 ## Non-CPG usage
 
-A follow-up change will implement the non-CPG version of this codebase
+A Dockerfile in the root of this repository can be used to build a container with the scripts and dependencies installed.
+The Docker Image contains a Nextflow installation, so the workflow can be run as follows:
+
+1. Build the Docker image - `docker build -t clinvarbitration:local .`
+2. Identify the path to the reference genome you wish to use (e.g. `/dir/ref_genomes/hg38.fa`)
+3. Create a folder for results (e.g. `mkdir /dir/results`)
+4. Start a container with the reference genome and results folder mounted, providing the path to reference genome and output location via CLI arguments:
+
+```bash
+docker run \
+    -v /dir/results:/results \
+    -v /dir/ref_genomes:/refgenomes:ro \
+    clinvarbitration:local \
+    nextflow -c nextflow/nextflow.config \
+    run nextflow/clinvarbitration.nf \
+    --ref_fa /refgenomes/hg38.fa \
+    --output_dir /results
+```
+
+The process should run end-to-end, generating results in the chosen output directory. `--assembly GRCh37` will generate results on GRCh37, and will require the corresponding reference genome.
+
+To debug any issues when running in this way, you can provide the `-log /results/logfile.txt` argument after `nextflow`, to retain the log file once the container closes down, i.e.:
+
+`docker ... nextflow -log /results/logfile.txt -c ...`
 
 ## CPG-Flow
 

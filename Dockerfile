@@ -48,12 +48,19 @@ COPY --from=bcftools_compiler /bcftools_install/usr/local/libexec/bcftools/* /us
 
 FROM base_bcftools AS now_build_clinvarbitration
 
+# install nextflow
+RUN wget get.nextflow.io -O nextflow && \
+	chmod +x nextflow && \
+    mv nextflow /usr/bin && \
+    nextflow self-update
+
 # now do some fun stuff, installing ClinvArbitration
 WORKDIR /clinvarbitration
 
-COPY bcftools_data bcftools_data/
 COPY src src/
 COPY pyproject.toml README.md ./
 
 # pip install but don't retain the cache files
 RUN pip install --no-cache-dir ".[cpg]"
+
+COPY nextflow nextflow/
