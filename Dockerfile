@@ -64,4 +64,3 @@ COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir ".[cpg]"
 
 COPY nextflow nextflow/
-
