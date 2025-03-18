@@ -125,7 +125,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
         if genome_build not in ['GRCh37', 'GRCh38']:
             raise ValueError('Unsupported genome build specified')
 
-        gff3 = f'/clinvarbitration/bcftools_data/{genome_build}.gff3.gz'
+        gff3 = get_batch().read_input(config_retrieve(['references', 'ensembl_113', 'gff3']))
 
         job = get_batch().new_job('AnnotateClinvarSnvsWithBcftools', attributes={'tool': 'bcftools'})
         job.image(config_retrieve(['workflow', 'driver_image']))
@@ -171,7 +171,7 @@ class Pm5TableGeneration(MultiCohortStage):
 
         annotated_snvs = get_batch().read_input(inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools))
 
-        job.declare_resource_group(output={'pm5.ht.tar.gz': '{root}.pm5.ht.tar.gz', 'pm5.json': '{root}.json'})
+        job.declare_resource_group(output={'pm5.ht.tar.gz': '{root}.pm5.ht.tar.gz', 'pm5.json': '{root}.pm5.json'})
 
         # write both HT and JSON outputs to the same root location
         job.command(f'pm5_table -i {annotated_snvs} -o {job.output}')
@@ -334,6 +334,8 @@ class ClinvarbitrationNextflow(MultiCohortStage):
             },
         )
 
+        gff3 = get_batch().read_input(config_retrieve(['references', 'ensembl_113', 'gff3']))
+
         # nextflow go brrrr
         job.command(
             f"""
@@ -341,7 +343,8 @@ class ClinvarbitrationNextflow(MultiCohortStage):
                 -c nextflow/nextflow.config \
                 run nextflow/clinvarbitration.nf \
                 --ref_fa {ref_fa} \
-                --output_dir {job.output}
+                --output_dir {job.output} \
+                --gff3 {gff3}
             """,
         )
 

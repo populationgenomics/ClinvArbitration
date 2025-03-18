@@ -32,8 +32,6 @@ jobs:
       DOCKER_MAIN: australia-southeast1-docker.pkg.dev/cpg-common/images
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: 'true'
 
       - id: "google-cloud-auth"
         name: "Authenticate to Google Cloud"
