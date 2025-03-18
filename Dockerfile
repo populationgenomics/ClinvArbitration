@@ -58,7 +58,7 @@ RUN wget get.nextflow.io -O nextflow && \
 WORKDIR /clinvarbitration
 
 COPY src src/
-COPY pyproject.toml README.md main.nf ./
+COPY pyproject.toml README.md ./
 
 # pip install but don't retain the cache files
 RUN pip install --no-cache-dir ".[cpg]"
