@@ -57,7 +57,7 @@ def populate_job_meta(output_file: str):
 
 @stage
 class CopyLatestClinvarFiles(MultiCohortStage):
-    def expected_outputs(self, mc: 'MultiCohort') -> 'dict[str, Path]':
+    def expected_outputs(self, mc: 'MultiCohort') -> dict[str, 'Path']:
         return {
             'submission_file': get_output_folder() / 'submission_summary.txt.gz',
             'variant_file': get_output_folder() / 'variant_summary.txt.gz',
@@ -80,7 +80,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
 
 @stage(required_stages=[CopyLatestClinvarFiles], analysis_type='clinvarbitration', analysis_keys=['clinvar_decisions'])
 class GenerateNewClinvarSummary(MultiCohortStage):
-    def expected_outputs(self, mc: 'MultiCohort') -> 'dict[str, Path]':
+    def expected_outputs(self, mc: 'MultiCohort') -> dict[str, 'Path']:
         """
         a couple of files and a HT as Paths
         """
