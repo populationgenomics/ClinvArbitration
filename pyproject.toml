@@ -23,7 +23,7 @@ classifiers=[
 ]
 
 dependencies=[
-    'hail>=0.2.133',  # should install the CPG fork if possible
+    'hail>=0.2.134',
 ]
 
 [project.urls]
