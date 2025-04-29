@@ -93,8 +93,8 @@ class GenerateNewClinvarSummary(MultiCohortStage):
         outputs = self.expected_outputs(mc)
 
         # identify input files from CopyLatestClinvarFiles (raw ClinVar data)
-        var_file = get_batch().read_input(inputs.as_str(mc, CopyLatestClinvarFiles, 'variant_file'))
-        sub_file = get_batch().read_input(inputs.as_str(mc, CopyLatestClinvarFiles, 'submission_file'))
+        var_file = inputs.as_str(mc, CopyLatestClinvarFiles, 'variant_file')
+        sub_file = inputs.as_str(mc, CopyLatestClinvarFiles, 'submission_file')
 
         job = generate_new_summary(
             var_file=var_file,
