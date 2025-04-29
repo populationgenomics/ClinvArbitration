@@ -440,6 +440,10 @@ def parse_into_table(json_path: str, out_path: str, assembly: str) -> hl.Table:
     ht = ht.transmute(locus=hl.locus(ht.contig, ht.position))
     ht = ht.key_by(ht.locus, ht.alleles)
 
+    ht = ht.annotate_globals(
+        creation_date=datetime.now(tz=TIMEZONE).strftime('%Y-%m-%d'),
+    )
+
     # write out to the specified location
     ht.write(f'{out_path}.ht', overwrite=True)
 

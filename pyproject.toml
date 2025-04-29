@@ -7,7 +7,7 @@ name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
 version='2.1.0'
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.10"
 license={ "file" = "LICENSE" }
 classifiers=[
     'Environment :: Console',
@@ -23,7 +23,7 @@ classifiers=[
 ]
 
 dependencies=[
-    'hail==0.2.133',  # should install the CPG fork if possible
+    'hail>=0.2.133',  # should install the CPG fork if possible
 ]
 
 [project.urls]
@@ -32,7 +32,7 @@ Repository = "https://github.com/populationgenomics/ClinvArbitration"
 [project.optional-dependencies]
 # various requirements when running cpg-flow/analysis-runner
 cpg = [
-    'cpg-flow>=v0.1.2',
+    'cpg-flow>=v0.2.1',
 ]
 test = [
     'bump2version',
@@ -45,6 +45,7 @@ test = [
 [project.scripts]
 # sets off the whole workflow in cpg-flow orchestrated Stages
 run_workflow = 'clinvarbitration.run_workflow:cli_main'
+run_nextflow = 'clinvarbitration.stages.nextflow_stages:cli_main'
 
 # Step 1; re-summarise ClinVar using altered conflict resolution
 resummary = 'clinvarbitration.scripts.resummarise_clinvar:cli_main'
@@ -121,3 +122,4 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 # suppress the ARG002 "Unused method argument" warning in the stages.py file
 ## - we don't need any generic cpg-flow arguments, but need to fit the required method signature
 "src/clinvarbitration/stages.py" = ["ARG002"]
+"src/clinvarbitration/nextflow_stages.py" = ["ARG002"]

@@ -1,0 +1,55 @@
+from typing import TYPE_CHECKING
+
+from cpg_utils.config import config_retrieve
+from cpg_utils.hail_batch import get_batch
+
+
+if TYPE_CHECKING:
+    from hailtop.batch.job import BashJob
+    from cpg_utils import Path
+
+
+def generate_new_summary(
+    var_file: 'Path',
+    sub_file: 'Path',
+    output_root: 'Path',
+) -> 'BashJob':
+    """
+    gets the remote resources for submissions and variants
+
+    Args:
+        var_file
+        sub_file
+        output_root (Pathlike): base path to write both outputs in the resource group to
+    """
+
+    job = get_batch().new_job('GenerateNewClinvarSummary')
+    job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
+
+    if sites_to_blacklist := config_retrieve(['workflow', 'site_blacklist'], []):
+        blacklist_sites = ' '.join(f'"{site}"' for site in sites_to_blacklist)
+        blacklist_string = f' -b {blacklist_sites}'
+    else:
+        blacklist_string = ''
+
+    var_file_local = get_batch().read_input(var_file)
+    sub_file_local = get_batch().read_input(sub_file)
+
+    job.declare_resource_group(
+        output={
+            'ht.tar.gz': '{root}.ht.tar.gz',
+            'vcf.bgz': '{root}.vcf.bgz',
+            'vcf.bgz.tbi': '{root}.vcf.bgz.tbi',
+        },
+    )
+
+    # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
+    job.command(f'resummary -v {var_file_local} -s {sub_file_local} -o {job.output} --minimal {blacklist_string}')
+
+    # don't tar from current location, we'll catch all the tmp pathing
+    job.command(f'mv {job.output}.ht clinvar_decisions.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.ht')
+
+    # selectively copy back some outputs
+    get_batch().write_output(job.output, output_root)
+
+    return job
