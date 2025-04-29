@@ -38,6 +38,23 @@ def get_output_folder():
     )
 
 
+def populate_job_meta(output_file: str):
+    """
+    populates some metadata for the job
+
+    Args:
+        output_file (str): path to the output file
+
+    Returns:
+        dict of metadata
+    """
+
+    from clinvarbitration import __version__ as clinvarbitration_version
+
+    print(f'Generating output meta for {output_file}')
+    return {'image': config_retrieve(['workflow', 'driver_image']), 'version': clinvarbitration_version}
+
+
 @stage
 class CopyLatestClinvarFiles(MultiCohortStage):
     def expected_outputs(self, mc: 'MultiCohort') -> 'dict[str, Path]':
@@ -119,23 +136,6 @@ class Pm5TableGeneration(MultiCohortStage):
         )
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
-
-
-def populate_job_meta(output_file: str):
-    """
-    populates some metadata for the job
-
-    Args:
-        output_file (str): path to the output file
-
-    Returns:
-        dict of metadata
-    """
-
-    from clinvarbitration import __version__ as clinvarbitration_version
-
-    print(f'Generating output meta for {output_file}')
-    return {'image': config_retrieve(['workflow', 'driver_image']), 'version': clinvarbitration_version}
 
 
 @stage(
