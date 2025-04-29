@@ -20,17 +20,17 @@ def copy_latest_files(
         submissions (Pathlike): path to write the submission file
         variants (Pathlike): path to write the variant file
     """
-    bash_job = get_batch().new_bash_job('CopyLatestClinvarFiles')
-    bash_job.image(config_retrieve(['workflow', 'driver_image']))
+    job = get_batch().new_bash_job('CopyLatestClinvarFiles')
+    job.image(config_retrieve(['workflow', 'driver_image']))
 
     directory = 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/'
     sub_file = 'submission_summary.txt.gz'
     var_file = 'variant_summary.txt.gz'
 
-    bash_job.command(f'wget -q {directory}{sub_file} -O {bash_job.subs}')
-    bash_job.command(f'wget -q {directory}{var_file} -O {bash_job.vars}')
+    job.command(f'wget -q {directory}{sub_file} -O {job.subs}')
+    job.command(f'wget -q {directory}{var_file} -O {job.vars}')
 
-    get_batch().write_output(bash_job.subs, submissions)
-    get_batch().write_output(bash_job.vars, variants)
+    get_batch().write_output(job.subs, submissions)
+    get_batch().write_output(job.vars, variants)
 
-    return bash_job
+    return job

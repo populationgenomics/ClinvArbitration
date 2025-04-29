@@ -23,7 +23,7 @@ def generate_pm5_data(
     annotated_snvs_local = get_batch().read_input(annotated_snvs)
 
     job = get_batch().new_bash_job('Pm5TableGeneration')
-    job.image(config_retrieve(['workflow', 'driver_image']))
+    job.image(config_retrieve(['workflow', 'driver_image'])).storage('10G')
 
     job.declare_resource_group(output={'ht.tar.gz': '{root}.ht.tar.gz', 'json': '{root}.json'})
 
