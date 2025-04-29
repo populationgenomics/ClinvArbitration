@@ -7,7 +7,7 @@ name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
 version='2.1.1'
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.11"
 license={ "file" = "LICENSE" }
 classifiers=[
     'Environment :: Console',
