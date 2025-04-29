@@ -57,17 +57,21 @@ def populate_job_meta(output_file: str):
 
 @stage
 class CopyLatestClinvarFiles(MultiCohortStage):
-    def expected_outputs(self, mc: 'MultiCohort') -> dict[str, 'Path']:
+    """
+    This stage runs a wget on two separate resource files:
+    1. ClinVar submissions (every individual clinvar submission, submitter, rating...)
+    2. ClinVar variants (every individual clinvar variant, position, gene, etc...)
+
+    These are localised in preparation for the next stage, which will generate a re-summary of the clinvar data
+    """
+
+    def expected_outputs(self, mc: 'MultiCohort') -> 'dict[str, Path]':
         return {
             'submission_file': get_output_folder() / 'submission_summary.txt.gz',
             'variant_file': get_output_folder() / 'variant_summary.txt.gz',
         }
 
     def queue_jobs(self, mc: 'MultiCohort', inputs: 'StageInput') -> 'StageOutput':
-        """
-        run a wget copy of the relevant files into GCP
-        """
-
         outputs = self.expected_outputs(mc)
 
         bash_job = copy_latest_files(
@@ -80,10 +84,14 @@ class CopyLatestClinvarFiles(MultiCohortStage):
 
 @stage(required_stages=[CopyLatestClinvarFiles], analysis_type='clinvarbitration', analysis_keys=['clinvar_decisions'])
 class GenerateNewClinvarSummary(MultiCohortStage):
-    def expected_outputs(self, mc: 'MultiCohort') -> dict[str, 'Path']:
-        """
-        a couple of files and a HT as Paths
-        """
+    """
+    Use the downloaded ClinVar raw data, and re-assess all submissions at each locus
+    This is done by grouping all submissions by their ClinVar Allele ID,
+    filtering out old/irrelevant submissions,
+    then re-assessing the remaining submissions to create a more decisive classification
+    """
+
+    def expected_outputs(self, mc: 'MultiCohort') -> 'dict[str, Path]':
         return {
             'clinvar_decisions': get_output_folder() / 'clinvar_decisions.ht.tar.gz',
             'snv_vcf': get_output_folder() / 'clinvar_decisions.vcf.bgz',
@@ -107,7 +115,7 @@ class GenerateNewClinvarSummary(MultiCohortStage):
 @stage(required_stages=[GenerateNewClinvarSummary])
 class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
     """
-    take the vcf output from the clinvar stage, and apply consequence annotations
+    Take the vcf output from the clinvar stage, and apply consequence annotations
     this uses BCFtools for speed and re-deployability, instead of VEP
     """
 
@@ -128,10 +136,13 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
 
 @stage(required_stages=[AnnotateClinvarSnvsWithBcftools])
 class Pm5TableGeneration(MultiCohortStage):
-    def expected_outputs(self, mc: 'MultiCohort') -> dict[str, 'Path']:
-        """
-        a single HT, compressed into a tarball
-        """
+    """
+    Reads in the annotated variant data (in TSV format), and generates a PM5 table
+    For each missense variant, we collect all other pathogenic missense variants affecting the same codon
+    This is output as a HT, and a JSON file of the raw representation
+    """
+
+    def expected_outputs(self, mc: 'MultiCohort') -> 'dict[str, Path]':
         return {
             'pm5_ht': get_output_folder() / 'clinvar_decisions.pm5.ht.tar.gz',
             'pm5_json': get_output_folder() / 'clinvar_decisions.pm5.json',
@@ -161,7 +172,9 @@ class Pm5TableGeneration(MultiCohortStage):
 )
 class PackageForRelease(MultiCohortStage):
     """
-    takes the data created so far, and packages it up for release
+    Takes the data created so far, and packages it up for release
+    This includes the re-summarised data, the annotated variants, and the PM5 table/JSON representation
+    They are exported as a single tarball, which should be uploaded to the release page monthly
     """
 
     def expected_outputs(self, multicohort: 'MultiCohort') -> 'Path':
