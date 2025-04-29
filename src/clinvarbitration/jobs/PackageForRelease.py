@@ -28,7 +28,7 @@ def package_data_for_release(
         output (Pathlike): path to write output file to
     """
 
-    job = get_batch().new_job('PackageForRelease')
+    job = get_batch().new_bash_job('PackageForRelease')
     job.image(config_retrieve(['workflow', 'driver_image'])).storage('10G')
 
     annotated_tsv_local = get_batch().read_input(annotated_tsv)

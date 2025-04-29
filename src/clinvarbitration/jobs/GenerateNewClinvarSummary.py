@@ -23,7 +23,7 @@ def generate_new_summary(
         output_root (Pathlike): base path to write both outputs in the resource group to
     """
 
-    job = get_batch().new_job('GenerateNewClinvarSummary')
+    job = get_batch().new_bash_job('GenerateNewClinvarSummary')
     job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
 
     if sites_to_blacklist := config_retrieve(['workflow', 'site_blacklist'], []):

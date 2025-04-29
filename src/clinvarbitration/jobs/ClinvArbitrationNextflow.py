@@ -26,7 +26,7 @@ def clinvarbitration_nextflow(
     ref_fa = get_batch().read_input(config_retrieve(['workflow', 'ref_fa']))
 
     # make a new job
-    job = get_batch().new_job('Run ClinvArbitration Nextflow')
+    job = get_batch().new_bash_job('Run ClinvArbitration Nextflow')
 
     job.image(config_retrieve(['workflow', 'driver_image']))
 

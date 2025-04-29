@@ -29,7 +29,7 @@ def annotate_clinvar_snvs(
 
     gff3 = get_batch().read_input(config_retrieve(['references', 'ensembl_113', 'gff3']))
 
-    job = get_batch().new_job('AnnotateClinvarSnvsWithBcftools', attributes={'tool': 'bcftools'})
+    job = get_batch().new_bash_job('AnnotateClinvarSnvsWithBcftools', attributes={'tool': 'bcftools'})
     job.image(config_retrieve(['workflow', 'driver_image'])).storage('10G')
 
     # -g is the GFF3 file, -f is the reference fasta
