@@ -139,7 +139,7 @@ class Pm5TableGeneration(MultiCohortStage):
     """
     Reads in the annotated variant data (in TSV format), and generates a PM5 table
     For each missense variant, we collect all other pathogenic missense variants affecting the same codon
-    This is output as a HT, and a JSON file of the raw representation
+    This is output as an HT, and a JSON file of the raw representation
     """
 
     def expected_outputs(self, mc: 'MultiCohort') -> 'dict[str, Path]':
