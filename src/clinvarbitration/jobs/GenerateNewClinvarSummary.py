@@ -45,7 +45,6 @@ def generate_new_summary(
         },
     )
 
-    # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
     job.command(
         f'python3 {resummarise_clinvar.__file__} \
         -v {var_file_local} \
