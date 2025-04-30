@@ -47,12 +47,6 @@ test = [
 run_workflow = 'clinvarbitration.run_workflow:cli_main'
 run_nextflow = 'clinvarbitration.stages.nextflow_stages:cli_main'
 
-# Step 1; re-summarise ClinVar using altered conflict resolution
-resummary = 'clinvarbitration.scripts.resummarise_clinvar:cli_main'
-
-# Step 2, post-annotation; obtain PM5 annotations from VEP annotated clinvar
-pm5_table = 'clinvarbitration.scripts.clinvar_by_codon:cli_main'
-
 [tool.setuptools]
 package-dir = {"" = "src"}
 

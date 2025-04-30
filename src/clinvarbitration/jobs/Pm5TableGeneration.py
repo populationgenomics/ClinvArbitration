@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 from cpg_utils.config import config_retrieve
 from cpg_utils.hail_batch import get_batch
 
+from clinvarbitration.scripts import clinvar_by_codon
+
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
@@ -28,7 +30,7 @@ def generate_pm5_data(
     job.declare_resource_group(output={'ht.tar.gz': '{root}.ht.tar.gz', 'json': '{root}.json'})
 
     # write both HT and JSON outputs to the same root location
-    job.command(f'pm5_table -i {annotated_snvs_local} -o {job.output}')
+    job.command(f'{clinvar_by_codon.__file__} -i {annotated_snvs_local} -o {job.output}')
 
     # compress the HT and remove as a single file
     job.command(

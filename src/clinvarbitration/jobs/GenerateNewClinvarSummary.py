@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 from cpg_utils.config import config_retrieve
 from cpg_utils.hail_batch import get_batch
 
+from clinvarbitration.scripts import resummarise_clinvar
+
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
@@ -44,7 +46,13 @@ def generate_new_summary(
     )
 
     # resummary is an entrypoint alias for scripts/resummarise_clinvar.py
-    job.command(f'resummary -v {var_file_local} -s {sub_file_local} -o {job.output} --minimal {blacklist_string}')
+    job.command(
+        f'{resummarise_clinvar.__file__} \
+        -v {var_file_local} \
+        -s {sub_file_local} \
+        -o {job.output} \
+        --minimal {blacklist_string}'
+    )
 
     # don't tar from current location, we'll catch all the tmp pathing
     job.command(f'mv {job.output}.ht clinvar_decisions.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.ht')
