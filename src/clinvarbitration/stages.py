@@ -125,7 +125,7 @@ class AnnotateClinvarSnvsWithBcftools(MultiCohortStage):
     def queue_jobs(self, mc: 'MultiCohort', inputs: 'StageInput') -> 'StageOutput':
         output = self.expected_outputs(mc)
 
-        snv_vcf = get_batch().read_input(inputs.as_str(mc, GenerateNewClinvarSummary, 'snv_vcf'))
+        snv_vcf = inputs.as_str(mc, GenerateNewClinvarSummary, 'snv_vcf')
 
         job = annotate_clinvar_snvs(
             snv_vcf=snv_vcf,
