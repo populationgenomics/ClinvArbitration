@@ -30,7 +30,7 @@ def generate_pm5_data(
     job.declare_resource_group(output={'ht.tar.gz': '{root}.ht.tar.gz', 'json': '{root}.json'})
 
     # write both HT and JSON outputs to the same root location
-    job.command(f'{clinvar_by_codon.__file__} -i {annotated_snvs_local} -o {job.output}')
+    job.command(f'python3 {clinvar_by_codon.__file__} -i {annotated_snvs_local} -o {job.output}')
 
     # compress the HT and remove as a single file
     job.command(
