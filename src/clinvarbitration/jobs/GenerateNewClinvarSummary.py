@@ -50,7 +50,7 @@ def generate_new_summary(
         -v {var_file_local} \
         -s {sub_file_local} \
         -o {job.output} \
-        --minimal {blacklist_string}'
+        --minimal {blacklist_string}',
     )
 
     # don't tar from current location, we'll catch all the tmp pathing
