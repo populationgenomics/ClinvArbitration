@@ -31,6 +31,7 @@ import hail as hl
 import pandas as pd
 import zoneinfo
 
+
 ASSEMBLY = 'Assembly'
 GRCH37 = 'GRCh37'
 GRCH38 = 'GRCh38'
@@ -444,6 +445,15 @@ def parse_into_table(json_path: str, out_path: str, assembly: str) -> hl.Table:
         creation_date=datetime.now(tz=TIMEZONE).strftime('%Y-%m-%d'),
     )
 
+    # persist the relevant clinvar annotations in INFO
+    ht = ht.transmute(
+        info=hl.struct(
+            allele_id=ht.allele_id,
+            gold_stars=ht.gold_stars,
+            clinical_significance=ht.clinical_significance,
+        ),
+    )
+
     # write out to the specified location
     ht.write(f'{out_path}.ht', overwrite=True)
 
@@ -642,15 +652,6 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
 
     logging.info('JSON written to file, parsing into a Hail Table')
     ht = parse_into_table(json_path=json_output, out_path=output_root, assembly=assembly)
-
-    # persist the relevant clinvar annotations in INFO
-    ht = ht.transmute(
-        info=hl.struct(
-            allele_id=ht.allele_id,
-            gold_stars=ht.gold_stars,
-            clinical_significance=ht.clinical_significance,
-        ),
-    )
 
     # export this table of decisions as a tabix-indexed VCF
     logging.info('Writing out all entries as a VCF')

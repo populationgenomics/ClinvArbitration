@@ -24,6 +24,7 @@ classifiers=[
 
 dependencies=[
     'hail>=0.2.134',
+    "loguru>=0.7.3",
 ]
 
 [project.urls]

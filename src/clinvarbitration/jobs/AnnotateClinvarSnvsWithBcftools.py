@@ -27,6 +27,7 @@ def annotate_clinvar_snvs(
     # need a genome reference - mandatory argument
     ref_fa = get_batch().read_input(config_retrieve(['workflow', 'ref_fa']))
 
+    # read in the gene model file
     gff3 = get_batch().read_input(config_retrieve(['references', 'ensembl_113', 'gff3']))
 
     job = get_batch().new_bash_job('AnnotateClinvarSnvsWithBcftools', attributes={'tool': 'bcftools'})
