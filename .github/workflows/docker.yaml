@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  VERSION: 2.1.0
+  VERSION: 2.1.1
 
 jobs:
   docker:
@@ -28,7 +28,7 @@ jobs:
       BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       IMAGE_NAME: clinvarbitration
-      DOCKER_TMP: australia-southeast1-docker.pkg.dev/cpg-common/images-tmp
+      DOCKER_TMP: australia-southeast1-docker.pkg.dev/cpg-common/images-dev
       DOCKER_MAIN: australia-southeast1-docker.pkg.dev/cpg-common/images
     steps:
       - uses: actions/checkout@v4
