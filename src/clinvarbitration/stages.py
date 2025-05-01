@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from cpg_utils import Path, to_path
 from cpg_utils.config import config_retrieve
-from cpg_utils.hail_batch import get_batch
 
 from cpg_flow.stage import MultiCohortStage, stage
 
@@ -82,7 +81,7 @@ class CopyLatestClinvarFiles(MultiCohortStage):
         return self.make_outputs(data=outputs, jobs=bash_job, target=mc)
 
 
-@stage(required_stages=[CopyLatestClinvarFiles], analysis_type='clinvarbitration', analysis_keys=['clinvar_decisions'])
+@stage(required_stages=[CopyLatestClinvarFiles])
 class GenerateNewClinvarSummary(MultiCohortStage):
     """
     Use the downloaded ClinVar raw data, and re-assess all submissions at each locus
