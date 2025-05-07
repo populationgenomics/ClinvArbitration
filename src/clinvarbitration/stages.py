@@ -25,12 +25,12 @@ if TYPE_CHECKING:
 def get_output_folder():
     """
     get the folder to use for this run
-    sits in the cpg-common bucket, in a folder named YY-MM
+    sits in a bucket accessible to the operating dataset, in a folder named "clinvarbitration/YY-MM"
     """
 
     return to_path(
         join(
-            config_retrieve(['storage', 'common', 'analysis']),
+            config_retrieve(['storage', 'default', 'default']),
             'clinvarbitration',
             datetime.now().strftime('%y-%m'),  # noqa: DTZ005
         ),
