@@ -126,9 +126,6 @@ def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_r
     # now set a schema to read that into a table... if you want hail
     schema = hl.dtype(HAIL_SCHEMA)
 
-    # start the local hail runtime
-    hl.context.init_local(default_reference=assembly)
-
     # import the table, and transmute to top-level attributes
     ht = hl.import_table(json_out_path, no_header=True, types={'f0': schema})
     ht = ht.transmute(**ht.f0)
@@ -153,6 +150,10 @@ def main(input_tsv: str, output_root: str, assembly: str):
         output_root ():
         assembly (str): genome build to use
     """
+
+    # start the local hail runtime
+    hl.context.init_spark(master='local[1]')
+    hl.default_reference('GRCh38')
 
     # parse the TSV into a dictionary
     clinvar_dict = parse_tsv_into_dict(input_tsv)

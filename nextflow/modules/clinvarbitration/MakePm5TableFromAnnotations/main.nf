@@ -11,9 +11,7 @@ process MakePm5TableFromAnnotations {
         path "clinvar_decisions.pm5.ht.tar.gz", emit: "ht_tar"
 
     """
-    pm5_script=$(python -c "from clinvarbitration.scripts import clinvar_by_codon; print(clinvar_by_codon.__file__)")
-
-    python3 "${pm5_script}" \
+    python3 -m clinvarbitration.scripts.clinvar_by_codon \
         -i "${annotated_snv}" \
         -o clinvar_decisions.pm5
 

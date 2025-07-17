@@ -418,9 +418,6 @@ def parse_into_table(json_path: str, out_path: str, assembly: str) -> hl.Table:
         the Hail Table object created
     """
 
-    # start a hail runtime
-    hl.context.init_local(default_reference=assembly)
-
     # define the schema for each written line
     schema = hl.dtype(
         'struct{'
@@ -569,6 +566,8 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
         minimal (bool): only keep the talos-relevant entries
         assembly (str): genome build to use
     """
+    hl.context.init_spark(master='local[1]')
+    hl.default_reference('GRCh38')
 
     logging.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants, assembly)
@@ -642,6 +641,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
             handle.write(f'{json.dumps(each_dict)}\n')
 
     logging.info('JSON written to file, parsing into a Hail Table')
+
     ht = parse_into_table(json_path=json_output, out_path=output_root, assembly=assembly)
 
     # persist the relevant clinvar annotations in INFO (for vcf export)

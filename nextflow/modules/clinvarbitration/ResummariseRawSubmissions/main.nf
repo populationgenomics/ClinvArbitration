@@ -22,8 +22,7 @@ process ResummariseRawSubmissions {
     // clinvar_decisions.vcf.bgz - a bgzipped VCF containing only pathogenic SNV entries
     // clinvar_decisions.ht.tar.gz - a Hail Table containing the summarised data entries, compressed
     """
-    resummary_script=$(python -c "from clinvarbitration.scripts import resummarise_clinvar; print(resummarise_clinvar.__file__)")
-    python3 "${resummary_script}" \
+    python3 -m clinvarbitration.scripts.resummarise_clinvar \
         -v "${variant_summary}" \
         -s "${submission_summary}" \
         -o "clinvar_decisions" \
