@@ -104,14 +104,13 @@ def parse_tsv_into_dict(input_tsv: str) -> dict[str, set[str]]:
     return clinvar_dict
 
 
-def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_root: str, assembly: str) -> None:
+def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_root: str) -> None:
     """
     write the dictionary to a Hail Table
 
     Args:
         clinvar_dict ():
         output_root (str): path to write outputs to
-        assembly (str): genome build to use
     """
 
     # save the dictionary locally
@@ -125,9 +124,6 @@ def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_r
 
     # now set a schema to read that into a table... if you want hail
     schema = hl.dtype(HAIL_SCHEMA)
-
-    # start the local hail runtime
-    hl.context.init_local(default_reference=assembly)
 
     # import the table, and transmute to top-level attributes
     ht = hl.import_table(json_out_path, no_header=True, types={'f0': schema})
@@ -154,13 +150,16 @@ def main(input_tsv: str, output_root: str, assembly: str):
         assembly (str): genome build to use
     """
 
+    # start the local hail runtime
+    hl.context.init_spark(master='local[1]')
+    hl.default_reference(assembly)
+
     # parse the TSV into a dictionary
     clinvar_dict = parse_tsv_into_dict(input_tsv)
 
     parse_dictionary_into_hail_table(
         clinvar_dict=clinvar_dict,
         output_root=output_root,
-        assembly=assembly,
     )
 
 

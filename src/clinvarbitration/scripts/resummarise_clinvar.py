@@ -404,7 +404,7 @@ def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
     return sorted(all_subs, key=lambda x: (ORDERED_ALLELES[assembly].index(x['contig']), x['position']))
 
 
-def parse_into_table(json_path: str, out_path: str, assembly: str) -> hl.Table:
+def parse_into_table(json_path: str, out_path: str) -> hl.Table:
     """
     takes the file of one clinvar variant per line
     processes that line into a table based on the schema
@@ -412,14 +412,10 @@ def parse_into_table(json_path: str, out_path: str, assembly: str) -> hl.Table:
     Args:
         json_path (str): path to the JSON file (temp)
         out_path (str): where to write the Hail table
-        assembly (str): genome build to use
 
     Returns:
         the Hail Table object created
     """
-
-    # start a hail runtime
-    hl.context.init_local(default_reference=assembly)
 
     # define the schema for each written line
     schema = hl.dtype(
@@ -569,6 +565,8 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
         minimal (bool): only keep the talos-relevant entries
         assembly (str): genome build to use
     """
+    hl.context.init_spark(master='local[1]')
+    hl.default_reference(assembly)
 
     logging.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants, assembly)
@@ -602,7 +600,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
     # now match those up with the variant coordinates
     logging.info('Matching decisions to variant coordinates')
     complete_decisions = []
-    for uniq_var_id, var_details in allele_map.items():
+    for var_details in allele_map.values():
         var_id = var_details['var_id']
 
         # we may have found no relevant submissions for this variant
@@ -617,7 +615,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
                 'position': var_details['pos'],
                 'clinical_significance': all_decisions[var_id][0].value,
                 'gold_stars': all_decisions[var_details['var_id']][1],
-                'allele_id': allele_map[uniq_var_id]['allele'],
+                'allele_id': var_details['allele'],
             },
         )
 
@@ -642,7 +640,8 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
             handle.write(f'{json.dumps(each_dict)}\n')
 
     logging.info('JSON written to file, parsing into a Hail Table')
-    ht = parse_into_table(json_path=json_output, out_path=output_root, assembly=assembly)
+
+    ht = parse_into_table(json_path=json_output, out_path=output_root)
 
     # persist the relevant clinvar annotations in INFO (for vcf export)
     ht = ht.transmute(
