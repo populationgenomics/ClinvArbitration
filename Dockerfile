@@ -61,6 +61,6 @@ COPY src src/
 COPY pyproject.toml README.md ./
 
 # pip install but don't retain the cache files
-RUN pip install --no-cache-dir
+RUN pip install --no-cache-dir .
 
 COPY nextflow nextflow/
