@@ -104,14 +104,13 @@ def parse_tsv_into_dict(input_tsv: str) -> dict[str, set[str]]:
     return clinvar_dict
 
 
-def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_root: str, assembly: str) -> None:
+def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_root: str) -> None:
     """
     write the dictionary to a Hail Table
 
     Args:
         clinvar_dict ():
         output_root (str): path to write outputs to
-        assembly (str): genome build to use
     """
 
     # save the dictionary locally
@@ -153,7 +152,7 @@ def main(input_tsv: str, output_root: str, assembly: str):
 
     # start the local hail runtime
     hl.context.init_spark(master='local[1]')
-    hl.default_reference('GRCh38')
+    hl.default_reference(assembly)
 
     # parse the TSV into a dictionary
     clinvar_dict = parse_tsv_into_dict(input_tsv)
@@ -161,7 +160,6 @@ def main(input_tsv: str, output_root: str, assembly: str):
     parse_dictionary_into_hail_table(
         clinvar_dict=clinvar_dict,
         output_root=output_root,
-        assembly=assembly,
     )
 
 

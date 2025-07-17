@@ -8,6 +8,7 @@ from cpg_utils.config import config_retrieve
 
 from cpg_flow.stage import MultiCohortStage, stage
 
+from clinvarbitration import __version__ as clinvarbitration_version
 from clinvarbitration.jobs.AnnotateClinvarSnvsWithBcftools import annotate_clinvar_snvs
 from clinvarbitration.jobs.CopyLatestClinvarFiles import copy_latest_files
 from clinvarbitration.jobs.GenerateNewClinvarSummary import generate_new_summary
@@ -47,8 +48,6 @@ def populate_job_meta(output_file: str):
     Returns:
         dict of metadata
     """
-
-    from clinvarbitration import __version__ as clinvarbitration_version
 
     print(f'Generating output meta for {output_file}')
     return {'image': config_retrieve(['workflow', 'driver_image']), 'version': clinvarbitration_version}
