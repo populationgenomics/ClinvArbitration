@@ -32,7 +32,15 @@ or for GRCh37
 
 https://ftp.ensembl.org/pub/grch37/release-113/gff3/homo_sapiens/
 
-If using Nextflow, supply the downloaded file to the workflow using the `--gff3 XXX` parameter 
+If using Nextflow, supply the downloaded file to the workflow using the `--gff3 XXX` parameter
+
+## Reference Genome
+
+Multiple Variants in the ClinVar database occur in regions which are typically masked in the reference genome. To ensure annotation can take place using BCFtools, you will need an unmasked copy of the relevant reference genome. If using a masked reference you will run into issues like:
+
+```text
+Error: the fasta reference does not match the VCF REF allele at chrY:630937 .. fasta=N vcf=C
+```
 
 ## Non-CPG usage
 
