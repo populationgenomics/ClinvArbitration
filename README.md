@@ -22,7 +22,25 @@ We aim to re-run this process monthly, and publish the resulting files as Releas
 
 ## Download
 
-Before running this workflow, download the GFF3 files used by BCFTools. These are described in more detail in the relevant [README](bcftools_data/README.txt).
+Before running this workflow, download the GFF3 files used by BCFTools.
+
+GRCh38:
+
+https://ftp.ensembl.org/pub/release-113/gff3/homo_sapiens/
+
+or for GRCh37
+
+https://ftp.ensembl.org/pub/grch37/release-113/gff3/homo_sapiens/
+
+If using Nextflow, supply the downloaded file to the workflow using the `--gff3 XXX` parameter
+
+## Reference Genome
+
+Multiple Variants in the ClinVar database occur in regions which are typically masked in the reference genome. To ensure annotation can take place using BCFtools, you will need an unmasked copy of the relevant reference genome. If using a masked reference you will run into issues like:
+
+```text
+Error: the fasta reference does not match the VCF REF allele at chrY:630937 .. fasta=N vcf=C
+```
 
 ## Non-CPG usage
 
@@ -43,6 +61,7 @@ docker run \
     run nextflow/clinvarbitration.nf \
     --ref_fa /refgenomes/hg38.fa \
     --output_dir /results
+    --gff3 [path_to_gff3]
 ```
 
 The process should run end-to-end, generating results in the chosen output directory. `--assembly GRCh37` will generate results on GRCh37, and will require the corresponding reference genome.

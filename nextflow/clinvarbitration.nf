@@ -15,6 +15,9 @@ params.publish_mode = 'copy'
 check_params()
 
 workflow {
+	if (!params.gff3) {
+	  error "Error: the GFF3 file needs to be supplied to annotate with BCFTools, please download one and locate with the CLI option --gff3 XXX"
+	}
     // localise both input files (in parallel, they're chunky) - check if they already exist
     // this just lets us resume the main processing steps instead of re-downloading this upon failure
     if (file(params.sub_sum_output).exists()) {
