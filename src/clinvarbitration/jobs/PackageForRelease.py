@@ -44,8 +44,8 @@ def package_data_for_release(
         mkdir clinvarbitration_data
         mv {annotated_tsv_local} clinvarbitration_data/clinvar_decisions.annotated.tsv
         mv {pm5_json_local} clinvarbitration_data/clinvar_decisions.pm5.json
-        tar -xzf {pm5_ht_local} -C clinvarbitration_data
-        tar -xzf {clinvar_decisions_local} -C clinvarbitration_data
+        tar -xf {pm5_ht_local} -C clinvarbitration_data
+        tar -xf {clinvar_decisions_local} -C clinvarbitration_data
         tar -czf {job.output} \
             clinvarbitration_data/clinvar_decisions.annotated.tsv \
             clinvarbitration_data/clinvar_decisions.pm5.json \

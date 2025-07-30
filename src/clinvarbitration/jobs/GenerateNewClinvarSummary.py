@@ -32,7 +32,7 @@ def generate_new_summary(
 
     job.declare_resource_group(
         output={
-            'ht.tar.gz': '{root}.ht.tar.gz',
+            'ht.tar': '{root}.ht.tar',
             'vcf.bgz': '{root}.vcf.bgz',
             'vcf.bgz.tbi': '{root}.vcf.bgz.tbi',
         },
@@ -46,7 +46,7 @@ def generate_new_summary(
     )
 
     # don't tar from current location, we'll catch all the tmp pathing
-    job.command(f'mv {job.output}.ht clinvar_decisions.ht && tar -czf {job.output}.ht.tar.gz clinvar_decisions.ht')
+    job.command(f'mv {job.output}.ht clinvar_decisions.ht && tar -cf {job.output}.ht.tar clinvar_decisions.ht')
 
     # selectively copy back some outputs
     get_batch().write_output(job.output, output_root)
