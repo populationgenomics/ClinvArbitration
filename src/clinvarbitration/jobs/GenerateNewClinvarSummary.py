@@ -16,14 +16,7 @@ def generate_new_summary(
     sub_file: 'Path',
     output_root: 'Path',
 ) -> 'BashJob':
-    """
-    gets the remote resources for submissions and variants
-
-    Args:
-        var_file
-        sub_file
-        output_root (Pathlike): base path to write both outputs in the resource group to
-    """
+    """Gets the remote resources for submissions and variants."""
 
     job = get_batch().new_bash_job('GenerateNewClinvarSummary')
     job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
@@ -49,8 +42,7 @@ def generate_new_summary(
         f'python3 {resummarise_clinvar.__file__} \
         -v {var_file_local} \
         -s {sub_file_local} \
-        -o {job.output} \
-        --minimal {blacklist_string}',
+        -o {job.output} {blacklist_string}',
     )
 
     # don't tar from current location, we'll catch all the tmp pathing
