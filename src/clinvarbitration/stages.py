@@ -167,11 +167,11 @@ class PackageForRelease(stage.MultiCohortStage):
         Localise all the previously generated data into a folder
         tarball it, and write out as a single file
         """
-        output = self.expected_outputs(targets.MultiCohort)
+        output = self.expected_outputs(multicohort)
 
-        annotated_variants_tsv = inputs.as_path(targets.MultiCohort, AnnotateClinvarSnvsWithBcftools)
-        clinvar_decisions = inputs.as_str(targets.MultiCohort, GenerateNewClinvarSummary, 'clinvar_decisions')
-        pm5 = inputs.as_dict(targets.MultiCohort, Pm5TableGeneration)
+        annotated_variants_tsv = inputs.as_path(multicohort, AnnotateClinvarSnvsWithBcftools)
+        clinvar_decisions = inputs.as_str(multicohort, GenerateNewClinvarSummary, 'clinvar_decisions')
+        pm5 = inputs.as_dict(multicohort, Pm5TableGeneration)
 
         job = package_data_for_release(
             annotated_tsv=annotated_variants_tsv,
@@ -181,4 +181,4 @@ class PackageForRelease(stage.MultiCohortStage):
             output=output,
         )
 
-        return self.make_outputs(targets.MultiCohort, data=output, jobs=job)
+        return self.make_outputs(multicohort, data=output, jobs=job)
