@@ -64,7 +64,7 @@ class CopyLatestClinvarFiles(stage.MultiCohortStage):
         return self.make_outputs(data=outputs, jobs=bash_job, target=mc)
 
 
-@stage(required_stages=[CopyLatestClinvarFiles])
+@stage.stage(required_stages=[CopyLatestClinvarFiles])
 class GenerateNewClinvarSummary(stage.MultiCohortStage):
     """
     Use the downloaded ClinVar raw data, and re-assess all submissions at each locus
@@ -94,7 +94,7 @@ class GenerateNewClinvarSummary(stage.MultiCohortStage):
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
 
-@stage(required_stages=[GenerateNewClinvarSummary])
+@stage.stage(required_stages=[GenerateNewClinvarSummary])
 class AnnotateClinvarSnvsWithBcftools(stage.MultiCohortStage):
     """
     Take the vcf output from the clinvar stage, and apply consequence annotations
@@ -116,7 +116,7 @@ class AnnotateClinvarSnvsWithBcftools(stage.MultiCohortStage):
         return self.make_outputs(target=mc, jobs=job, data=output)
 
 
-@stage(required_stages=[AnnotateClinvarSnvsWithBcftools])
+@stage.stage(required_stages=[AnnotateClinvarSnvsWithBcftools])
 class Pm5TableGeneration(stage.MultiCohortStage):
     """
     Reads in the annotated variant data (in TSV format), and generates a PM5 table
@@ -143,7 +143,7 @@ class Pm5TableGeneration(stage.MultiCohortStage):
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
 
-@stage(
+@stage.stage(
     required_stages=[
         GenerateNewClinvarSummary,
         AnnotateClinvarSnvsWithBcftools,
