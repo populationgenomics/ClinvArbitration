@@ -565,7 +565,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
         minimal (bool): only keep the talos-relevant entries
         assembly (str): genome build to use
     """
-    hl.context.init_spark(master='local[1]')
+    hl.context.init_spark(master='local[*]')
     hl.default_reference(assembly)
 
     logging.info('Getting alleleID-VariantID-Loci from variant summary')
@@ -590,10 +590,6 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
 
         # assess stars in remaining entries
         stars = check_stars(filtered_submissions)
-
-        # for now, skip over variants which are not relevant to Talos
-        if rating in [Consequence.UNCERTAIN, Consequence.UNKNOWN]:
-            continue
 
         all_decisions[var_id] = (rating, stars)
 

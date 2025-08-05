@@ -1,34 +1,32 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils.config import config_retrieve
-from cpg_utils.hail_batch import get_batch
+from cpg_utils import config, hail_batch, Path
 
 from clinvarbitration.scripts import resummarise_clinvar
 
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
-    from cpg_utils import Path
 
 
 def generate_new_summary(
-    var_file: 'Path',
-    sub_file: 'Path',
-    output_root: 'Path',
+    var_file: Path,
+    sub_file: Path,
+    output_root: Path,
 ) -> 'BashJob':
     """Gets the remote resources for submissions and variants."""
+    batch_instance = hail_batch.get_batch()
+    job = batch_instance.new_bash_job('GenerateNewClinvarSummary')
+    job.image(config.config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
 
-    job = get_batch().new_bash_job('GenerateNewClinvarSummary')
-    job.image(config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
-
-    if sites_to_blacklist := config_retrieve(['workflow', 'site_blacklist'], []):
+    if sites_to_blacklist := config.config_retrieve(['workflow', 'site_blacklist'], []):
         blacklist_sites = ' '.join(f'"{site}"' for site in sites_to_blacklist)
         blacklist_string = f' -b {blacklist_sites}'
     else:
         blacklist_string = ''
 
-    var_file_local = get_batch().read_input(var_file)
-    sub_file_local = get_batch().read_input(sub_file)
+    var_file_local = batch_instance.read_input(var_file)
+    sub_file_local = batch_instance.read_input(sub_file)
 
     job.declare_resource_group(
         output={
@@ -49,6 +47,6 @@ def generate_new_summary(
     job.command(f'mv {job.output}.ht clinvar_decisions.ht && tar -cf {job.output}.ht.tar clinvar_decisions.ht')
 
     # selectively copy back some outputs
-    get_batch().write_output(job.output, output_root)
+    batch_instance.write_output(job.output, output_root)
 
     return job
