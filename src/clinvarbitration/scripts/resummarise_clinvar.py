@@ -370,15 +370,7 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
     if not
         - return all submissions
 
-    Just to remove the possibility of removing expert curations, we won't
-    date filter any expert/manual entries this way
-
-    Args:
-        subs (): list of submissions
-
-    Returns:
-        either all submissions if none are after the ACMG cut-off
-        or, if newer entries exist, only those after cut-off
+    If the submission is an expert panel review or practice guideline, it is always retained.
     """
 
     # apply the date threshold to all submissions
@@ -390,16 +382,7 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
 
 
 def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
-    """
-    applies dual-layer sorting to the list of all decisions
-
-    Args:
-        all_subs (): list of all submissions
-        assembly (): genome build to use
-
-    Returns:
-        a list of submissions, sorted hierarchically on chr & pos
-    """
+    """Applies dual-layer sorting to the list of all decisions, on chr & pos."""
 
     return sorted(all_subs, key=lambda x: (ORDERED_ALLELES[assembly].index(x['contig']), x['position']))
 
