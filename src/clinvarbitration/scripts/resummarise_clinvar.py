@@ -490,11 +490,6 @@ def cli_main():
         required=True,
     )
     parser.add_argument(
-        '--minimal',
-        help='only keep path. and 1+ star benign',
-        action='store_true',
-    )
-    parser.add_argument(
         '-b',
         help='sites to blacklist',
         nargs='+',
@@ -514,30 +509,10 @@ def cli_main():
     if args.b:
         BLACKLIST.update(args.b)
 
-    main(subs=args.s, variants=args.v, output_root=args.o, minimal=args.minimal, assembly=args.assembly)
+    main(subs=args.s, variants=args.v, output_root=args.o, assembly=args.assembly)
 
 
-def only_keep_talos_relevant_entries(results: list[dict]) -> list[dict]:
-    """
-    filters the results to only those used in Talos:
-    - all Pathogenic ratings
-    - all Benign with >= 1 Star
-
-    Args:
-        results (list[dict]): all results
-
-    Returns:
-        the same results, but reduced
-    """
-    return [
-        result
-        for result in results
-        if (result['clinical_significance'] == Consequence.PATHOGENIC.value)
-        or ((result['clinical_significance'] == Consequence.BENIGN.value) and (result['gold_stars'] > 0))
-    ]
-
-
-def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: str):
+def main(subs: str, variants: str, output_root: str, assembly: str):
     """
     Redefines what it is to be a clinvar summary
 
@@ -545,7 +520,6 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
         subs (str): file path to all submissions (gzipped)
         variants (str): file path to variant summary (gzipped)
         output_root (str): path to write JSON out to
-        minimal (bool): only keep the talos-relevant entries
         assembly (str): genome build to use
     """
     hl.context.init_spark(master='local[*]')
@@ -597,11 +571,6 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
                 'allele_id': var_details['allele'],
             },
         )
-
-    # optionally, filter to just minimal useful entries
-    if minimal:
-        logger.info('Producing the reduced output set - Pathogenic and Strong Benign')
-        complete_decisions = only_keep_talos_relevant_entries(complete_decisions)
 
     logger.info(f'{len(complete_decisions)} ClinVar entries remain')
 

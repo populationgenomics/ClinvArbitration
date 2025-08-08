@@ -31,7 +31,7 @@ Two scripts are included here to take the Hail Tables and convert them to TSV fo
 
 We aim to generate data monthly, and publish the results on Zenodo. The latest version of the data can be found at:
 
-> https://zenodo.org/records/15896156
+> https://zenodo.org/records/16777475
 
 ### Local Running
 
