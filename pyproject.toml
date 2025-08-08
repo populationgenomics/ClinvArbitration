@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name='clinvarbitration'
@@ -24,6 +24,7 @@ classifiers=[
 
 dependencies=[
     'hail==0.2.134',
+    'hatchling',
     'cpg-flow==v0.3.2',
 ]
 
@@ -34,7 +35,6 @@ Repository = "https://github.com/populationgenomics/ClinvArbitration"
 # various requirements when running cpg-flow/analysis-runner
 test = [
     'bump2version',
-    'black',
     'pre-commit',
     'pytest',
     'pytest-xdist>=3.6.0',
@@ -45,28 +45,17 @@ test = [
 run_workflow = 'clinvarbitration.run_workflow:cli_main'
 run_nextflow = 'clinvarbitration.stages.nextflow_stages:cli_main'
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[tool.hatch.build.targets.wheel]
+packages = ["src/clinvarbitration"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
 
 [options]
 include_package_data = true
 
 [options.package_data]
 'clinvarbitration'=  ['config_template.toml']
-
-[tool.black]
-line-length = 120
-skip-string-normalization = true
-exclude = '''
-/(
-  venv
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 [tool.mypy]
 ignore_missing_imports = true

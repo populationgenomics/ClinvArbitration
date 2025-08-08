@@ -43,7 +43,7 @@ def annotate_clinvar_snvs(
             -s :missense \\
             -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" \\
             > {job.output}
-        """
+        """,
     )
 
     batch_instance.write_output(job.output, output)
