@@ -20,6 +20,7 @@ import gzip
 import json
 import logging
 import re
+import zoneinfo
 from argparse import ArgumentParser
 from collections import defaultdict
 from collections.abc import Generator
@@ -29,8 +30,6 @@ from enum import Enum
 
 import hail as hl
 import pandas as pd
-import zoneinfo
-
 
 ASSEMBLY = 'Assembly'
 GRCH37 = 'GRCh37'

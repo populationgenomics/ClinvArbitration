@@ -2,17 +2,15 @@ from argparse import ArgumentParser
 from typing import TYPE_CHECKING
 
 from cpg_flow.stage import MultiCohortStage, stage
-
 from cpg_flow.workflow import run_workflow
 
-from clinvarbitration.stages import get_output_folder, populate_job_meta
 from clinvarbitration.jobs.ClinvArbitrationNextflow import clinvarbitration_nextflow
-
+from clinvarbitration.stages import get_output_folder, populate_job_meta
 
 if TYPE_CHECKING:
     from cpg_flow.stage import StageInput, StageOutput
-    from cpg_utils import Path
     from cpg_flow.targets.multicohort import MultiCohort
+    from cpg_utils import Path
 
 
 @stage(

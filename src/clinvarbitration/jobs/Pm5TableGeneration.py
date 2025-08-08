@@ -1,19 +1,18 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils import config, to_path, Path
+from cpg_utils import Path
 from cpg_utils.config import config_retrieve
 from cpg_utils.hail_batch import get_batch
 
 from clinvarbitration.scripts import clinvar_by_codon
-
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
 
 
 def generate_pm5_data(
-    annotated_snvs: 'Path',
-    output_root: 'Path',
+    annotated_snvs: Path,
+    output_root: Path,
 ) -> 'BashJob':
     """Generate PM5 data (index pathogenic missense variants by codon/transcript)."""
 

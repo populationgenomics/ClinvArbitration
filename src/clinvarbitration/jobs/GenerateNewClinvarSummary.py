@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils import config, hail_batch, Path
+from cpg_utils import Path, config, hail_batch
 
 from clinvarbitration.scripts import resummarise_clinvar
-
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob

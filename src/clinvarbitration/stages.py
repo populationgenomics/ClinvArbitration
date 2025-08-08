@@ -2,9 +2,8 @@ from datetime import datetime
 from functools import cache
 from os.path import join
 
-from cpg_utils import Path, to_path, config
-
 from cpg_flow import stage, targets
+from cpg_utils import Path, config, to_path
 
 from clinvarbitration import __version__ as clinvarbitration_version
 from clinvarbitration.jobs.AnnotateClinvarSnvsWithBcftools import annotate_clinvar_snvs

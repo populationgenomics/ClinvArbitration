@@ -21,11 +21,10 @@ import logging
 import re
 import zoneinfo
 from argparse import ArgumentParser
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
 
 import hail as hl
-
 
 # I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
@@ -88,7 +87,8 @@ def parse_tsv_into_dict(input_tsv: str) -> dict[str, set[str]]:
             if not match:
                 raise ValueError(f'No codon found in {aa}')
 
-            assert match.group(1) == match.group(2), f'Codon numbers do not match in {aa}'
+            if match.group(1) != match.group(2):
+                raise ValueError(f'Codon numbers do not match in {aa}')
 
             aa_number = match.group(1)
 

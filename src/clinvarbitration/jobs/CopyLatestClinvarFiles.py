@@ -3,10 +3,9 @@ from typing import TYPE_CHECKING
 from cpg_utils.config import config_retrieve
 from cpg_utils.hail_batch import get_batch
 
-
 if TYPE_CHECKING:
-    from hailtop.batch.job import BashJob
     from cpg_utils import Path
+    from hailtop.batch.job import BashJob
 
 
 def copy_latest_files(

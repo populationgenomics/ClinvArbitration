@@ -4,14 +4,15 @@ point of entry script to run this pipeline
 
 from argparse import ArgumentParser
 
+from cpg_flow.workflow import run_workflow
+
 from clinvarbitration.stages import (
+    AnnotateClinvarSnvsWithBcftools,
     CopyLatestClinvarFiles,
     GenerateNewClinvarSummary,
-    AnnotateClinvarSnvsWithBcftools,
-    Pm5TableGeneration,
     PackageForRelease,
+    Pm5TableGeneration,
 )
-from cpg_flow.workflow import run_workflow
 
 
 def cli_main():
