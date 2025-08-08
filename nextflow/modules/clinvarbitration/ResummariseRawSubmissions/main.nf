@@ -20,8 +20,7 @@ process ResummariseRawSubmissions {
         -v "${variant_summary}" \
         -s "${submission_summary}" \
         -o "clinvar_decisions" \
-        --assembly "${params.assembly}" \
-        --minimal
+        --assembly "${params.assembly}"
     rm clinvar_decisions.json
     """
 }
