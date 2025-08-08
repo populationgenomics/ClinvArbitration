@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from cpg_utils import Path, config, hail_batch
 
-from clinvarbitration.scripts import resummarise_clinvar
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
@@ -15,7 +14,9 @@ def generate_new_summary(
 ) -> 'BashJob':
     """Gets the remote resources for submissions and variants."""
     batch_instance = hail_batch.get_batch()
+
     job = batch_instance.new_bash_job('GenerateNewClinvarSummary')
+
     job.image(config.config_retrieve(['workflow', 'driver_image'])).memory('highmem').cpu('2')
 
     if sites_to_blacklist := config.config_retrieve(['workflow', 'site_blacklist'], []):
@@ -36,7 +37,7 @@ def generate_new_summary(
     )
 
     job.command(
-        f'python3 {resummarise_clinvar.__file__} \
+        f'python3 -m clinvarbitration.scripts.resummarise_clinvar \
         -v {var_file_local} \
         -s {sub_file_local} \
         -o {job.output} {blacklist_string}',

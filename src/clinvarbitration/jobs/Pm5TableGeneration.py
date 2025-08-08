@@ -1,10 +1,7 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils import Path
-from cpg_utils.config import config_retrieve
-from cpg_utils.hail_batch import get_batch
+from cpg_utils import Path, config, hail_batch
 
-from clinvarbitration.scripts import clinvar_by_codon
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
@@ -16,15 +13,17 @@ def generate_pm5_data(
 ) -> 'BashJob':
     """Generate PM5 data (index pathogenic missense variants by codon/transcript)."""
 
-    annotated_snvs_local = get_batch().read_input(annotated_snvs)
+    batch_instance = hail_batch.get_batch('Run ClinvArbitration')
 
-    job = get_batch().new_bash_job('Pm5TableGeneration')
-    job.image(config_retrieve(['workflow', 'driver_image'])).storage('10G')
+    annotated_snvs_local = batch_instance.read_input(annotated_snvs)
+
+    job = batch_instance.new_bash_job('Pm5TableGeneration')
+    job.image(config.config_retrieve(['workflow', 'driver_image'])).storage('10G')
 
     job.declare_resource_group(output={'ht.tar': '{root}.ht.tar', 'json': '{root}.json'})
 
     # write both HT and JSON outputs to the same root location
-    job.command(f'python3 {clinvar_by_codon.__file__} -i {annotated_snvs_local} -o {job.output}')
+    job.command(f'python3 -m clinvarbitration.scripts.clinvar_by_codon -i {annotated_snvs_local} -o {job.output}')
 
     # compress the HT and remove as a single file
     job.command(
@@ -32,6 +31,6 @@ def generate_pm5_data(
     )
 
     # write both outputs together
-    get_batch().write_output(job.output, output_root)
+    batch_instance.write_output(job.output, output_root)
 
     return job

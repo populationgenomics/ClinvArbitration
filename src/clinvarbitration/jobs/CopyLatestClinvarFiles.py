@@ -1,16 +1,14 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils.config import config_retrieve
-from cpg_utils.hail_batch import get_batch
+from cpg_utils import Path, hail_batch, config
 
 if TYPE_CHECKING:
-    from cpg_utils import Path
     from hailtop.batch.job import BashJob
 
 
 def copy_latest_files(
-    submissions: 'Path',
-    variants: 'Path',
+    submissions: Path,
+    variants: Path,
 ) -> 'BashJob':
     """
     gets the remote resources for submissions and variants
@@ -19,8 +17,11 @@ def copy_latest_files(
         submissions (Pathlike): path to write the submission file
         variants (Pathlike): path to write the variant file
     """
-    job = get_batch().new_bash_job('CopyLatestClinvarFiles')
-    job.image(config_retrieve(['workflow', 'driver_image']))
+    batch_instance = hail_batch.get_batch('Run ClinvArbitration')
+
+    job = batch_instance.new_bash_job('CopyLatestClinvarFiles')
+
+    job.image(config.config_retrieve(['workflow', 'driver_image']))
 
     directory = 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/'
     sub_file = 'submission_summary.txt.gz'
@@ -29,7 +30,7 @@ def copy_latest_files(
     job.command(f'wget -q {directory}{sub_file} -O {job.subs}')
     job.command(f'wget -q {directory}{var_file} -O {job.vars}')
 
-    get_batch().write_output(job.subs, submissions)
-    get_batch().write_output(job.vars, variants)
+    batch_instance.write_output(job.subs, submissions)
+    batch_instance.write_output(job.vars, variants)
 
     return job
