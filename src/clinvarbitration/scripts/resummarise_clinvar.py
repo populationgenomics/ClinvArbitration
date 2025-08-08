@@ -201,7 +201,13 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
     decision = Consequence.UNCERTAIN
 
     # establish counts for this allele
-    counts = {Consequence.BENIGN: 0, Consequence.PATHOGENIC: 0, Consequence.UNCERTAIN: 0, 'total': 0}
+    counts = {
+        Consequence.BENIGN: 0,
+        Consequence.PATHOGENIC: 0,
+        Consequence.UNCERTAIN: 0,
+        Consequence.UNKNOWN: 0,
+        'total': 0,
+    }
 
     for each_sub in subs:
         # for 3/4-star ratings, don't look any further
@@ -209,7 +215,12 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
             return each_sub.classification
 
         counts['total'] += 1
-        if each_sub.classification in [Consequence.PATHOGENIC, Consequence.BENIGN, Consequence.UNCERTAIN]:
+        if each_sub.classification in [
+            Consequence.PATHOGENIC,
+            Consequence.BENIGN,
+            Consequence.UNCERTAIN,
+            Consequence.UNKNOWN,
+        ]:
             counts[each_sub.classification] += 1
 
     if counts[Consequence.PATHOGENIC] and counts[Consequence.BENIGN]:
@@ -226,7 +237,10 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
         else:
             decision = Consequence.CONFLICTING
 
-    # more than MAJORITY_RATIO are uncertain, call it uncertain
+    # more than MAJORITY_RATIO are uncertain or unknown, call it that
+    elif counts[Consequence.UNKNOWN] > (counts['total'] * MAJORITY_RATIO):
+        decision = Consequence.UNKNOWN
+
     elif counts[Consequence.UNCERTAIN] > (counts['total'] * MAJORITY_RATIO):
         decision = Consequence.UNCERTAIN
 
