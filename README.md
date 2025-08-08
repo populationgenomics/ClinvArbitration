@@ -25,17 +25,17 @@ Two scripts are included here to take the Hail Tables and convert them to TSV fo
 * [convert_pm5_ht_to_tsv.py](src/clinvarbitration/convert_pm5_ht_to_tsv.py)
   * Converts the PM5 Hail Table to a TSV file, columns for Transcript, Codon, and collected ClinVar IDs
 
-# Usage
+## Usage
 
-## Download
+### Download Results
 
 We aim to generate data monthly, and publish the results on Zenodo. The latest version of the data can be found at:
 
-https://zenodo.org/records/15896156
+> https://zenodo.org/records/15896156
 
-## Local Running
+### Local Running
 
-### Downloading input files
+#### Downloading input files
 
 A NextFlow workflow is provided to run the ClinvArbitration process locally. To use this process you will need reference files:
 
@@ -45,14 +45,14 @@ A NextFlow workflow is provided to run the ClinvArbitration process locally. To 
 
 A directory ([data](data)) and a script ([download_data.sh](data/download_files.sh)) are provided to download and store the required files. Running this script from the `data` directory will download and unpack all required files. The location these files are downloaded to matches the expected location in the Nextflow config, so you can run the workflow immediately after downloading.
 
-### Running the workflow
+#### Running the workflow
 
 The ClinvArbitration workflow can be run containerised, or locally. By default, the reference data will be read from a directory called `data`, and the outputs written to a directory `nextflow_outputs`.
 
 Local execution requires:
 
 - a Nextflow installation, to operate the workflow
-- a Python environment, with the Clinvarbitration package and its dependencies installed
+- a Python environment, with the ClinvArbitration package and its dependencies installed
   - this can be actioned with `pip install .` from the root of this repository
 - BCFtools, to annotate the ClinVar variants with gene information
 
