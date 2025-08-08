@@ -58,6 +58,7 @@ RUN wget get.nextflow.io -O nextflow && \
 WORKDIR /clinvarbitration
 
 COPY src src/
+COPY LICENSE README.md .
 COPY pyproject.toml README.md ./
 
 # pip install but don't retain the cache files
