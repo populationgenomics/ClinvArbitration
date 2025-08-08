@@ -18,7 +18,6 @@ variant_summary.txt
 
 import gzip
 import json
-import logging
 import re
 import zoneinfo
 from argparse import ArgumentParser
@@ -30,6 +29,7 @@ from enum import Enum
 
 import hail as hl
 import pandas as pd
+from loguru import logger
 
 ASSEMBLY = 'Assembly'
 GRCH37 = 'GRCh37'
@@ -455,7 +455,7 @@ def write_vep_vcf(clinvar_table: hl.Table, output_root: str):
     # export this data in VCF format
     vcf_path = f'{output_root}.unfiltered.vcf.bgz'
     hl.export_vcf(clinvar_table, vcf_path, tabix=True)
-    logging.info(f'Wrote VCF to {vcf_path}')
+    logger.info(f'Wrote VCF to {vcf_path}')
 
 
 def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
@@ -481,11 +481,10 @@ def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
     # export this data in VCF format
     vcf_path = f'{output_root}.vcf.bgz'
     hl.export_vcf(clinvar_table, vcf_path, tabix=True)
-    logging.info(f'Wrote SNV VCF to {vcf_path}')
+    logger.info(f'Wrote SNV VCF to {vcf_path}')
 
 
 def cli_main():
-    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(description='Generates a new clinVar summary from raw submission data')
     parser.add_argument(
         '-s',
@@ -564,10 +563,10 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
     hl.context.init_spark(master='local[*]')
     hl.default_reference(assembly)
 
-    logging.info('Getting alleleID-VariantID-Loci from variant summary')
+    logger.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants, assembly)
 
-    logging.info('Getting all decisions, indexed on clinvar Var ID')
+    logger.info('Getting all decisions, indexed on clinvar Var ID')
 
     # the raw IDs - some have ambiguous X/Y mappings
     all_uniq_ids = {x['var_id'] for x in allele_map.values()}
@@ -590,7 +589,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
         all_decisions[var_id] = (rating, stars)
 
     # now match those up with the variant coordinates
-    logging.info('Matching decisions to variant coordinates')
+    logger.info('Matching decisions to variant coordinates')
     complete_decisions = []
     for var_details in allele_map.values():
         var_id = var_details['var_id']
@@ -613,17 +612,17 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
 
     # optionally, filter to just minimal useful entries
     if minimal:
-        logging.info('Producing the reduced output set - Pathogenic and Strong Benign')
+        logger.info('Producing the reduced output set - Pathogenic and Strong Benign')
         complete_decisions = only_keep_talos_relevant_entries(complete_decisions)
 
-    logging.info(f'{len(complete_decisions)} ClinVar entries remain')
+    logger.info(f'{len(complete_decisions)} ClinVar entries remain')
 
     # sort all collected decisions, trying to reduce overhead in HT later
     complete_decisions_sorted = sort_decisions(complete_decisions, assembly=assembly)
 
     # write out the JSON version of these results
     json_output = f'{output_root}.json'
-    logging.info(f'temp JSON location: {json_output}')
+    logger.info(f'temp JSON location: {json_output}')
 
     # open this temp path and write the json contents, line by line
     # the HT generation will take the file path, not a list of dictionaries
@@ -631,7 +630,7 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
         for each_dict in complete_decisions_sorted:
             handle.write(f'{json.dumps(each_dict)}\n')
 
-    logging.info('JSON written to file, parsing into a Hail Table')
+    logger.info('JSON written to file, parsing into a Hail Table')
 
     ht = parse_into_table(json_path=json_output, out_path=output_root)
 
@@ -645,10 +644,10 @@ def main(subs: str, variants: str, output_root: str, minimal: bool, assembly: st
     )
 
     # export this table of decisions as a tabix-indexed VCF
-    logging.info('Writing out all entries as a VCF')
+    logger.info('Writing out all entries as a VCF')
     write_vep_vcf(ht, output_root)
 
-    logging.info('Writing out Pathogenic SNV VCF')
+    logger.info('Writing out Pathogenic SNV VCF')
     snv_missense_filter(ht, output_root)
 
 
