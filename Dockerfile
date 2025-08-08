@@ -23,8 +23,6 @@ RUN apt update && apt install --no-install-recommends -y \
 
 FROM basic AS bcftools_compiler
 
-ARG BCFTOOLS_VERSION=${BCFTOOLS_VERSION:-1.21}
-
 RUN apt-get update && apt-get install --no-install-recommends -y \
         gcc \
         libbz2-dev \
@@ -33,9 +31,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
         libssl-dev \
         make \
         zlib1g-dev && \
-    wget https://github.com/samtools/bcftools/releases/download/${BCFTOOLS_VERSION}/bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
-    tar -xf bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
-    cd bcftools-${BCFTOOLS_VERSION} && \
+    wget https://github.com/samtools/bcftools/releases/download/1.21/bcftools-1.21.tar.bz2 && \
+    tar -xf bcftools-1.21.tar.bz2 && \
+    cd bcftools-1.21 && \
     ./configure --enable-libcurl --enable-s3 --enable-gcs && \
     make && \
     strip bcftools plugins/*.so && \
@@ -48,16 +46,11 @@ COPY --from=bcftools_compiler /bcftools_install/usr/local/libexec/bcftools/* /us
 
 FROM base_bcftools AS now_build_clinvarbitration
 
-# install nextflow
-RUN wget get.nextflow.io -O nextflow && \
-	chmod +x nextflow && \
-    mv nextflow /usr/bin && \
-    nextflow self-update
-
 # now do some fun stuff, installing ClinvArbitration
 WORKDIR /clinvarbitration
 
 COPY src src/
+COPY LICENSE README.md .
 COPY pyproject.toml README.md ./
 
 # pip install but don't retain the cache files

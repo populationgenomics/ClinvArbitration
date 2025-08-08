@@ -1,6 +1,6 @@
-# ClinVar, reimagined
+# ClinVar, re-summarised
 
-## motivation
+## Motivation
 
 During the creation of [Talos](https://www.github.com/populationgenomics/automated-interpretation-pipeline), a tool for identifying clinically relevant variants in large cohorts, we use [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) ratings as a contributing factor in determining pathogenicity. During development of this tool we determined that the default summaries generated in ClinVar were highly conservative; see the [table here](https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/#agg_germline) describing the aggregate classification logic.
 
@@ -8,67 +8,79 @@ During the creation of [Talos](https://www.github.com/populationgenomics/automat
 
 This repository contains an alternative algorithm ([described here](docs/algorithm.md)) for re-aggregating the individual ClinVar submissions, generating decisions which favour clear assignment of pathogenic/benign ratings instead of defaulting to 'conflicting'. These ratings are not intended as a replacement of ClinVar's own decisions, but may provide value by showing that that though conflicting submissions exist, there is a clear bias towards either benign or pathogenic ratings.
 
-We aim to re-run this process monthly, and publish the resulting files as Releases. You can also run this locally (see `Usage`)
+We aim to re-run this process monthly, and publish the resulting files on Zenodo: https://zenodo.org/records/15896156
 
-## Outputs
+## Primary Outputs
 
-* JSON file & Hail Table of all revised decisions
-* Sites-only VCF of all revised decisions; this can be used as a custom annotation source in VEP or other annotators
-* Sites-only VCF of all Pathogenic-SNVs, for feeding into the ACMG criteria PM5 analysis
-* Annotated VCF of Pathogenic SNVs using `bcftools csq`
-* JSON file & Hail Table of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
+* Hail Table of all revised decisions
+* Hail Table of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
 
-# Usage
+## Conversion scripts
 
-## Download
+Two scripts are included here to take the Hail Tables and convert them to TSV format:
 
-Before running this workflow, download the GFF3 files used by BCFTools.
+* [convert_decisions_ht_to_tsv.py](src/clinvarbitration/convert_decisions_ht_to_tsv.py)
+  * Converts the ClinVar decisions Hail Table to a TSV file, columns for Chr, Pos, Ref, Alt, Allele ID, Rating, & Stars
 
-GRCh38:
+* [convert_pm5_ht_to_tsv.py](src/clinvarbitration/convert_pm5_ht_to_tsv.py)
+  * Converts the PM5 Hail Table to a TSV file, columns for Transcript, Codon, and collected ClinVar IDs
 
-https://ftp.ensembl.org/pub/release-113/gff3/homo_sapiens/
+## Usage
 
-or for GRCh37
+### Download Results
 
-https://ftp.ensembl.org/pub/grch37/release-113/gff3/homo_sapiens/
+We aim to generate data monthly, and publish the results on Zenodo. The latest version of the data can be found at:
 
-If using Nextflow, supply the downloaded file to the workflow using the `--gff3 XXX` parameter
+> https://zenodo.org/records/15896156
 
-## Reference Genome
+### Local Running
 
-Multiple Variants in the ClinVar database occur in regions which are typically masked in the reference genome. To ensure annotation can take place using BCFtools, you will need an unmasked copy of the relevant reference genome. If using a masked reference you will run into issues like:
+#### Downloading input files
 
-```text
-Error: the fasta reference does not match the VCF REF allele at chrY:630937 .. fasta=N vcf=C
-```
+A NextFlow workflow is provided to run the ClinvArbitration process locally. To use this process you will need reference files:
 
-## Non-CPG usage
+- a reference genome, in FASTA format
+- a GFF3 file, containing gene annotations for the reference genome
+- the files containing raw ClinVar submissions and variant details
 
-A Dockerfile in the root of this repository can be used to build a container with the scripts and dependencies installed.
-The Docker Image contains a Nextflow installation, so the workflow can be run as follows:
+A directory ([data](data)) and a script ([download_data.sh](data/download_files.sh)) are provided to download and store the required files. Running this script from the `data` directory will download and unpack all required files. The location these files are downloaded to matches the expected location in the Nextflow config, so you can run the workflow immediately after downloading.
 
-1. Build the Docker image - `docker build -t clinvarbitration:local .`
-2. Identify the path to the reference genome you wish to use (e.g. `/dir/ref_genomes/hg38.fa`)
-3. Create a folder for results (e.g. `mkdir /dir/results`)
-4. Start a container with the reference genome and results folder mounted, providing the path to reference genome and output location via CLI arguments:
+The ClinVar Variant and Submission summary files are updated weekly. You should delete your local copy and re-download each time you run this workflow, to ensure you're capturing the latest data.
+
+#### Running the workflow
+
+The ClinvArbitration workflow can be run containerised, or locally. By default, the reference data will be read from a directory called `data`, and the outputs written to a directory `nextflow_outputs`.
+
+Local execution requires:
+
+- a Nextflow installation, to operate the workflow
+- a Python environment, with the ClinvArbitration package and its dependencies installed
+  - this can be actioned with `pip install .` from the root of this repository
+- BCFtools, to annotate the ClinVar variants with gene information
 
 ```bash
-docker run \
-    -v /dir/results:/results \
-    -v /dir/ref_genomes:/refgenomes:ro \
-    clinvarbitration:local \
-    nextflow -c nextflow/nextflow.config \
-    run nextflow/clinvarbitration.nf \
-    --ref_fa /refgenomes/hg38.fa \
-    --output_dir /results
-    --gff3 [path_to_gff3]
+nextflow -c nextflow/nextflow.config \
+    run nextflow/clinvarbitration.nf
 ```
 
-The process should run end-to-end, generating results in the chosen output directory. `--assembly GRCh37` will generate results on GRCh37, and will require the corresponding reference genome.
+A containerised execution requires:
 
-To debug any issues when running in this way, you can provide the `-log /results/logfile.txt` argument after `nextflow`, to retain the log file once the container closes down, i.e.:
+- a Nextflow installation, to operate the workflow
+- a Docker installation, to run the workflow in a container
 
-`docker ... nextflow -log /results/logfile.txt -c ...`
+Step 1: build the Docker image:
+
+```bash
+docker build -t clinvarbitration:local .
+```
+
+Step 2: run the workflow using the Docker image:`
+
+```bash
+nextflow -c nextflow/nextflow.config \
+    run nextflow/clinvarbitration.nf \
+    -with-docker clinvarbitration:local
+```
 
 ## CPG-Flow
 
@@ -83,12 +95,12 @@ The intention is that once the Dockerfile within this repository is used, this w
 ```bash
 analysis-runner \
     --skip-repo-checkout \
-    --image <URI of the docker image> \
-    --config <path to a config file> \
+    --image australia-southeast1-docker.pkg.dev/cpg-common/images-dev/clinvarbitration:PR_24 \
+    --config new_clinvarbitration.toml \
     --dataset seqr \
     --description 'resummarise_clinvar' \
     -o resummarise_clinvar \
-    --access-level standard \
+    --access-level test \
     run_workflow
 ```
 

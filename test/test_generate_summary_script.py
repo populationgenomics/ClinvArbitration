@@ -1,8 +1,8 @@
+import zoneinfo
 from copy import deepcopy
 from datetime import datetime
 
 import pytest
-import zoneinfo
 
 from clinvarbitration.scripts.resummarise_clinvar import Consequence, Submission, check_stars, consequence_decision
 

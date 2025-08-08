@@ -1,34 +1,28 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils.config import config_retrieve
-from cpg_utils.hail_batch import get_batch
-
+from cpg_utils import Path, config, hail_batch
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
-    from cpg_utils import Path
 
 
 def clinvarbitration_nextflow(
-    output_root: 'Path',
+    output_root: Path,
 ) -> 'BashJob':
     """
     runs the whole process using nextflow, in a single stage
-    more a proof of concept than actually useful
-    Args:
-        output_root ():
-
-    Returns:
-
+    more a proof of concept than actually useful in the CPG deployment
     """
 
+    batch_instance = hail_batch.get_batch('Run ClinvArbitration')
+
     # read in a reference genome
-    ref_fa = get_batch().read_input(config_retrieve(['workflow', 'ref_fa']))
+    ref_fa = batch_instance.read_input(config.config_retrieve(['workflow', 'ref_fa']))
 
     # make a new job
-    job = get_batch().new_bash_job('Run ClinvArbitration Nextflow')
+    job = batch_instance.new_bash_job('Run ClinvArbitration Nextflow')
 
-    job.image(config_retrieve(['workflow', 'driver_image']))
+    job.image(config.config_retrieve(['workflow', 'driver_image']))
 
     # set some resource params
     job.storage('10Gi').memory('highmem').cpu(2)
@@ -51,7 +45,7 @@ def clinvarbitration_nextflow(
         },
     )
 
-    gff3 = get_batch().read_input(config_retrieve(['references', 'ensembl_113', 'gff3']))
+    gff3 = batch_instance.read_input(config.config_retrieve(['references', 'ensembl_113', 'gff3']))
 
     # nextflow go brrrr
     job.command(
@@ -66,4 +60,5 @@ def clinvarbitration_nextflow(
     )
 
     # copy the outputs back, in one smooooooth motion
-    get_batch().write_output(job.output, output_root)
+    batch_instance.write_output(job.output, output_root)
+    return job

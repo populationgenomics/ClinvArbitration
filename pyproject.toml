@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
-version='2.2.0'
+version='2.2.1'
 requires-python = ">=3.10,<3.11"
 license={ "file" = "LICENSE" }
 classifiers=[
@@ -24,6 +24,7 @@ classifiers=[
 
 dependencies=[
     'hail==0.2.134',
+    'hatchling',
     'cpg-flow==v0.3.2',
 ]
 
@@ -34,7 +35,6 @@ Repository = "https://github.com/populationgenomics/ClinvArbitration"
 # various requirements when running cpg-flow/analysis-runner
 test = [
     'bump2version',
-    'black',
     'pre-commit',
     'pytest',
     'pytest-xdist>=3.6.0',
@@ -45,28 +45,17 @@ test = [
 run_workflow = 'clinvarbitration.run_workflow:cli_main'
 run_nextflow = 'clinvarbitration.stages.nextflow_stages:cli_main'
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[tool.hatch.build.targets.wheel]
+packages = ["src/clinvarbitration"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
 
 [options]
 include_package_data = true
 
 [options.package_data]
 'clinvarbitration'=  ['config_template.toml']
-
-[tool.black]
-line-length = 120
-skip-string-normalization = true
-exclude = '''
-/(
-  venv
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -93,18 +82,13 @@ ignore = [
     "ANN101", # Missing type annotation for self in method
     "ANN102", # Missing type annotation for `cls` in classmethod
     "ANN201", # Missing return type annotation for public function
-    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
     "ANN204", # Missing type annotation for special method `__init__`
     "E731", # Do not assign a lambda expression, use a def
-    "G004", # Logging statement uses f-string
-    "PLW0603", # Using the global statement to update `<VAR>` is discouraged
     "Q000", # Single quotes found but double quotes preferred
-    "S101", # Use of assert detected
     "PLR0912", # Too many branches (> 12)
     "PLR0913", # Too many arguments in function (> 5)
     "C901", # method is too complex (> 10 conditions)
     "N999", # invalid module name (not lower-case and potholes)
-    "I001", # Import block is un-sorted or un-formatted (to remove soon)
 ]
 
 [tool.ruff.lint.isort]
@@ -115,3 +99,4 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 ## - we don't need any generic cpg-flow arguments, but need to fit the required method signature
 "src/clinvarbitration/stages.py" = ["ARG002"]
 "src/clinvarbitration/nextflow_stages.py" = ["ARG002"]
+"test/**" = ["S101"]

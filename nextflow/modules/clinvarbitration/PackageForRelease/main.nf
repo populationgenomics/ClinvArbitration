@@ -1,24 +1,19 @@
-
 process PackageForRelease {
 
     publishDir params.output_dir, mode: 'copy'
 
     input:
-        path decisions_ht_tar
-        path pm5_ht_tar
-        path pm5_json
+        path decisions_ht
+        path pm5_ht
 
     output:
-        path "clinvar_decisions.release.tar.gz"
+        path "clinvar_decisions.release.tar"
 
     // create a new folder, decompress the previous archives, and recompress everything together
     """
     mkdir clinvarbitration_data
-    tar -xzf "${pm5_ht_tar}" -C clinvarbitration_data
-    tar -xzf "${decisions_ht_tar}" -C clinvarbitration_data
-    tar -czf clinvar_decisions.release.tar.gz \
-        clinvarbitration_data/clinvar_decisions.ht \
-        clinvarbitration_data/clinvar_decisions.pm5.ht \
-        "${pm5_json}"
+    mv "${pm5_ht}" clinvarbitration_data/
+    mv "${decisions_ht}" clinvarbitration_data/
+    tar -cf clinvar_decisions.release.tar clinvarbitration_data
     """
 }

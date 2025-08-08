@@ -1,4 +1,3 @@
-
 process ResummariseRawSubmissions {
 
     publishDir params.output_dir, mode: 'copy'
@@ -9,18 +8,13 @@ process ResummariseRawSubmissions {
         path submission_summary
 
     output:
-        path "clinvar_decisions.json", emit: "json"
         path "clinvar_decisions.vcf.bgz", emit: "vcf"
         path "clinvar_decisions.vcf.bgz.tbi", emit: "vcf_idx"
-        path "clinvar_decisions.unfiltered.vcf.bgz", emit: "vcf_all"
-        path "clinvar_decisions.unfiltered.vcf.bgz.tbi", emit: "vcf_all_idx"
-        path "clinvar_decisions.ht.tar.gz", emit: "ht_tar"
+        path "clinvar_decisions.ht", emit: "ht"
 
     // Generates
-    // clinvar_decisions.json - a JSON file containing the summarised data entries, one json object per line
-    // clinvar_decisions_unfiltered.vcf.bgz - a bgzipped VCF which can be used in VEP annotation (all decisions)
-    // clinvar_decisions.vcf.bgz - a bgzipped VCF containing only pathogenic SNV entries
-    // clinvar_decisions.ht.tar.gz - a Hail Table containing the summarised data entries, compressed
+    // clinvar_decisions.vcf.bgz + index - VCF containing only pathogenic SNV entries, feeds into annotation
+    // clinvar_decisions.ht - a Hail Table containing the summarised data entries
     """
     python3 -m clinvarbitration.scripts.resummarise_clinvar \
         -v "${variant_summary}" \
@@ -28,6 +22,6 @@ process ResummariseRawSubmissions {
         -o "clinvar_decisions" \
         --assembly "${params.assembly}" \
         --minimal
-    tar -czf clinvar_decisions.ht.tar.gz clinvar_decisions.ht
+    rm clinvar_decisions.json
     """
 }
