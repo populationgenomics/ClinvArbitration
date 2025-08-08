@@ -1,27 +1,27 @@
 
 process AnnotateCsqWithBcftools {
 
-    publishDir params.output_dir, mode: 'copy'
+    publishDir params.output_dir
 
     input:
         // the two input files from ClinVar
         path vcf
         path ref_fa
+        path gff3
 
     output:
-        path "clinvar_decisions.annotated.tsv", emit: "tsv"
+        path "clinvar_decisions.annotated.tsv"
 
     """
     bcftools csq \
         -f "${ref_fa}" \
-        -g "${params.gff3}" \
-        "${vcf}" \
-        -o temp_annotated_output.vcf
+        -g "${gff3}" \
+        "${vcf}" |
     bcftools +split-vep \
-        temp_annotated_output.vcf \
         -d \
         -s :missense \
         -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" \
+        - \
         > clinvar_decisions.annotated.tsv
     """
 }
