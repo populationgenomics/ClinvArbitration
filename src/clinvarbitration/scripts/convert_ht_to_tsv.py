@@ -43,13 +43,11 @@ def reformat_table(ht: hl.Table) -> hl.Table:
     ht = ht.key_by('chrom', 'pos', 'ref', 'alt')
 
     # use select to drop all replaced fields
-    ht = ht.select(
+    return ht.select(
         ht.clinical_significance,
         ht.gold_stars,
         ht.allele_id,
     )
-
-    return ht
 
 
 if __name__ == '__main__':
