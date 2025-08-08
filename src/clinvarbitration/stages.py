@@ -145,7 +145,6 @@ class Pm5TableGeneration(stage.MultiCohortStage):
 @stage.stage(
     required_stages=[
         GenerateNewClinvarSummary,
-        AnnotateClinvarSnvsWithBcftools,
         Pm5TableGeneration,
     ],
     analysis_type='clinvarbitration',
@@ -168,12 +167,10 @@ class PackageForRelease(stage.MultiCohortStage):
         """
         output = self.expected_outputs(multicohort)
 
-        annotated_variants_tsv = inputs.as_path(multicohort, AnnotateClinvarSnvsWithBcftools)
         clinvar_decisions = inputs.as_str(multicohort, GenerateNewClinvarSummary, 'clinvar_decisions')
         pm5 = inputs.as_dict(multicohort, Pm5TableGeneration)
 
         job = package_data_for_release(
-            annotated_tsv=annotated_variants_tsv,
             pm5_json=pm5['pm5_json'],
             pm5_ht=pm5['pm5_ht'],
             clinvar_decisions=clinvar_decisions,

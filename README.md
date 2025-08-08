@@ -83,12 +83,12 @@ The intention is that once the Dockerfile within this repository is used, this w
 ```bash
 analysis-runner \
     --skip-repo-checkout \
-    --image <URI of the docker image> \
-    --config <path to a config file> \
+    --image australia-southeast1-docker.pkg.dev/cpg-common/images-dev/clinvarbitration:PR_24 \
+    --config new_clinvarbitration.toml \
     --dataset seqr \
     --description 'resummarise_clinvar' \
     -o resummarise_clinvar \
-    --access-level standard \
+    --access-level test \
     run_workflow
 ```
 

@@ -30,7 +30,7 @@ from loguru import logger
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
 
 # the schema to use for the Hail Table
-HAIL_SCHEMA = 'struct{newkey:str,clinvar_alleles:str}'
+HAIL_SCHEMA = 'struct{transcript_codon:str,clinvar_alleles:str}'
 
 # captures the number in amino_acid_changes, e.g. "334N>334T"
 # there's the potential to not have the last AA if it's a nonsense
@@ -116,7 +116,7 @@ def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_r
     json_out_path = f'{output_root}.json'
     with open(json_out_path, 'w') as f:
         for key, value in clinvar_dict.items():
-            new_dict = {'newkey': key, 'clinvar_alleles': '+'.join(sorted(value))}
+            new_dict = {'transcript_codon': key, 'clinvar_alleles': '+'.join(sorted(value))}
             f.write(f'{json.dumps(new_dict)}\n')
 
     logger.info(f'JSON written to {json_out_path}')
@@ -127,7 +127,7 @@ def parse_dictionary_into_hail_table(clinvar_dict: dict[str, set[str]], output_r
     # import the table, and transmute to top-level attributes
     ht = hl.import_table(json_out_path, no_header=True, types={'f0': schema})
     ht = ht.transmute(**ht.f0)
-    ht = ht.key_by(ht.newkey)
+    ht = ht.key_by(ht.transcript_codon)
 
     # implant the creation date
     ht = ht.annotate_globals(
