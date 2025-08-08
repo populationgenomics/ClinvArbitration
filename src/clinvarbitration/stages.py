@@ -153,7 +153,7 @@ class Pm5TableGeneration(stage.MultiCohortStage):
 class PackageForRelease(stage.MultiCohortStage):
     """
     Takes the data created so far, and packages it up for release
-    This includes the re-summarised data, the annotated variants, and the PM5 table/JSON representation
+    This includes the re-summarised decisions, and the PM5 table
     They are exported as a single tarball, which should be uploaded to the release page monthly
     """
 
@@ -162,17 +162,16 @@ class PackageForRelease(stage.MultiCohortStage):
 
     def queue_jobs(self, multicohort: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
         """
-        Localise all the previously generated data into a folder
-        tarball it, and write out as a single file
+        Localise the two previously generated MatrixTables
+        tarball as a single file, and write out as a single file
         """
         output = self.expected_outputs(multicohort)
 
         clinvar_decisions = inputs.as_str(multicohort, GenerateNewClinvarSummary, 'clinvar_decisions')
-        pm5 = inputs.as_dict(multicohort, Pm5TableGeneration)
+        pm5 = inputs.as_str(multicohort, Pm5TableGeneration, 'pm5_ht')
 
         job = package_data_for_release(
-            pm5_json=pm5['pm5_json'],
-            pm5_ht=pm5['pm5_ht'],
+            pm5_ht=pm5,
             clinvar_decisions=clinvar_decisions,
             output=output,
         )
