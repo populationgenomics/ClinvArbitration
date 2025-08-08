@@ -14,6 +14,8 @@ relevant fields:
 
 variant_summary.txt
  - links clinvar AlleleID, Variant ID, position and alleles
+
+These need to be localised prior to running this script.
 """
 
 import gzip

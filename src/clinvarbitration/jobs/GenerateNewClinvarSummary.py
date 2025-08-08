@@ -11,7 +11,7 @@ def generate_new_summary(
     sub_file: Path,
     output_root: Path,
 ) -> 'BashJob':
-    """Gets the remote resources for submissions and variants."""
+    """Using the submission and variants data files, generate revised variant summaries."""
     batch_instance = hail_batch.get_batch()
 
     job = batch_instance.new_bash_job('GenerateNewClinvarSummary')
