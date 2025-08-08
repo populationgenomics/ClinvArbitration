@@ -45,6 +45,8 @@ A NextFlow workflow is provided to run the ClinvArbitration process locally. To 
 
 A directory ([data](data)) and a script ([download_data.sh](data/download_files.sh)) are provided to download and store the required files. Running this script from the `data` directory will download and unpack all required files. The location these files are downloaded to matches the expected location in the Nextflow config, so you can run the workflow immediately after downloading.
 
+The ClinVar Variant and Submission summary files are updated weekly. You should delete your local copy and re-download each time you run this workflow, to ensure you're capturing the latest data.
+
 #### Running the workflow
 
 The ClinvArbitration workflow can be run containerised, or locally. By default, the reference data will be read from a directory called `data`, and the outputs written to a directory `nextflow_outputs`.
