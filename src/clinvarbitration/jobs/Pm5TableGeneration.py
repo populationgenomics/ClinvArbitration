@@ -19,9 +19,9 @@ def generate_pm5_data(
     job = batch_instance.new_bash_job('Pm5TableGeneration')
     job.image(config.config_retrieve(['workflow', 'driver_image'])).storage('10G')
 
-    job.declare_resource_group(output={'ht.tar': '{root}.ht.tar', 'json': '{root}.json'})
+    job.declare_resource_group(output={'ht.tar': '{root}.ht.tar', 'tsv': '{root}.tsv'})
 
-    # write both HT and JSON outputs to the same root location
+    # write both HT and TSV outputs to the same root location
     job.command(f'python3 -m clinvarbitration.scripts.clinvar_by_codon -i {annotated_snvs_local} -o {job.output}')
 
     # compress the HT and remove as a single file

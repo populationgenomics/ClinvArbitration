@@ -37,7 +37,9 @@ workflow {
 
     PackageForRelease(
         ResummariseRawSubmissions.out.ht,
-        MakePm5TableFromAnnotations.out,
+        ResummariseRawSubmissions.out.tsv,
+        MakePm5TableFromAnnotations.out.ht,
+        MakePm5TableFromAnnotations.out.tsv,
     )
 }
 
