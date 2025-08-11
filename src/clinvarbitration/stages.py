@@ -172,7 +172,7 @@ class PackageForRelease(stage.MultiCohortStage):
         pm5 = inputs.as_dict(multicohort, Pm5TableGeneration)
 
         job = package_data_for_release(
-            pm5_ht=pm5,
+            pm5=pm5,
             clinvar_decisions=clinvar_decisions,
             output=output,
         )
