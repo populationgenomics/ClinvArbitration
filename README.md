@@ -15,6 +15,22 @@ We aim to re-run this process monthly, and publish the resulting files on Zenodo
 * Hail Table and TSV of all revised decisions
 * Hail Table and TSV of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
 
+### TSVs
+
+1. `clinvar_decisions.tsv`: A tab-separated file with headers, containing our re-summarised ClinVar decisions. Columns:
+   - `contig`: the chromosome or contig of the variant
+   - `position`: the position of the variant on the contig
+   - `reference`: the reference allele at the variant position
+   - `alternate`: the alternate allele at the variant position
+   - `clinical_significance`: the clinical significance of the variant, as determined by our algorithm
+   - `gold_stars`: the number of gold stars assigned to the variant, indicating the quality of the evidence supporting the asserted significance
+   - `allele_id`: the unique identifier for the variant in ClinVar, accessible directly via URL like `http://www.ncbi.nlm.nih.gov/clinvar?term=XXXXXXX[alleleid]`, or through ClinVar's web page using an 'advanced search' field
+
+2. `clinvar_decisions.pm5.tsv`: A tab-separated file with headers, containing our PM5 missense decisions. All ClinVar entries in this file are Pathogenic Missense changes. Columns:
+   - `transcript`: the transcript ID of the gene in which the missense change occurs
+   - `codon`: the codon position of the missense change in that transcript
+   - `clinvar_alleles`: `+`-delimited String, each entry being an `AlleleID::GoldStars` string, where `AlleleID` is the unique identifier for the ClinVar allele, and `GoldStars` is the number of stars assigned to that allele. e.g. `12345::3+67890::1`, indicating that allele `12345` has 3 stars, and allele `67890` has 1 star, and both affect the same codon in the same transcript.
+
 ## Usage
 
 ### Download Results
