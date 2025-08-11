@@ -12,18 +12,8 @@ We aim to re-run this process monthly, and publish the resulting files on Zenodo
 
 ## Primary Outputs
 
-* Hail Table of all revised decisions
-* Hail Table of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
-
-## Conversion scripts
-
-Two scripts are included here to take the Hail Tables and convert them to TSV format:
-
-* [convert_decisions_ht_to_tsv.py](src/clinvarbitration/convert_decisions_ht_to_tsv.py)
-  * Converts the ClinVar decisions Hail Table to a TSV file, columns for Chr, Pos, Ref, Alt, Allele ID, Rating, & Stars
-
-* [convert_pm5_ht_to_tsv.py](src/clinvarbitration/convert_pm5_ht_to_tsv.py)
-  * Converts the PM5 Hail Table to a TSV file, columns for Transcript, Codon, and collected ClinVar IDs
+* Hail Table and TSV of all revised decisions
+* Hail Table and TSV of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
 
 ## Usage
 
@@ -110,7 +100,6 @@ A config file is required containing a few entries, some relating to this workfl
 * `site_blacklist`: list of ClinVar submitters to ignore. Useful in removing noise, or blinding to _self_ submissions
 * `ref_fasta`: required to run bcftools csq. Must match the `genome_build`
 * `genome_build`: used to decide whether ClinVar/Annotation is sourced using GRCh37 or GRCh38 (default)
-
 
 ## Acknowledgements
 
