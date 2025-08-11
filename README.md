@@ -8,7 +8,7 @@ During the creation of [Talos](https://www.github.com/populationgenomics/automat
 
 This repository contains an alternative algorithm ([described here](docs/algorithm.md)) for re-aggregating the individual ClinVar submissions, generating decisions which favour clear assignment of pathogenic/benign ratings instead of defaulting to 'conflicting'. These ratings are not intended as a replacement of ClinVar's own decisions, but may provide value by showing that that though conflicting submissions exist, there is a clear bias towards either benign or pathogenic ratings.
 
-We aim to re-run this process monthly, and publish the resulting files on Zenodo: https://zenodo.org/records/15896156
+We aim to re-run this process monthly, and publish the resulting files on Zenodo You can download this pre-generated bundle here: https://zenodo.org/records/16792026
 
 ## Primary Outputs
 
