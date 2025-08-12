@@ -417,6 +417,7 @@ def parse_into_table(tsv_path: str, out_path: str) -> hl.Table:
 
     ht = ht.annotate_globals(
         creation_date=datetime.now(tz=TIMEZONE).strftime('%Y-%m-%d'),
+        blacklist=hl.literal(BLACKLIST),
     )
 
     # write out to the specified location
