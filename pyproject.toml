@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
-version='2.2.2'
+version='2.2.3'
 requires-python = ">=3.10,<3.11"
 license={ "file" = "LICENSE" }
 classifiers=[
