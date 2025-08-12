@@ -19,7 +19,6 @@ These need to be localised prior to running this script.
 """
 
 import gzip
-import json
 import re
 import zoneinfo
 from argparse import ArgumentParser
@@ -57,6 +56,7 @@ ORDERED_ALLELES: dict[str, list[str]] = {
     GRCH38: [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM'],
     GRCH37: [*list(map(str, range(1, 23))), 'X', 'Y', 'MT'],
 }
+TSV_KEYS = ['contig', 'position', 'reference', 'alternate', 'clinical_significance', 'gold_stars', 'allele_id']
 
 # I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
@@ -402,74 +402,84 @@ def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
     return sorted(all_subs, key=lambda x: (ORDERED_ALLELES[assembly].index(x['contig']), x['position']))
 
 
-def parse_into_table(json_path: str, out_path: str) -> hl.Table:
-    """
-    takes the file of one clinvar variant per line
-    processes that line into a table based on the schema
+def parse_into_table(tsv_path: str, out_path: str) -> hl.Table:
+    """Takes the file of one clinvar variant per line, processes that line into a table."""
 
-    Args:
-        json_path (str): path to the JSON file (temp)
-        out_path (str): where to write the Hail table
+    ht = hl.import_table(tsv_path, types={'position': hl.tint32, 'gold_stars': hl.tint32, 'allele_id': hl.tint32})
 
-    Returns:
-        the Hail Table object created
-    """
-
-    # define the schema for each written line
-    schema = hl.dtype(
-        'struct{'
-        'alleles:array<str>,'
-        'contig:str,'
-        'position:int32,'
-        'clinical_significance:str,'
-        'gold_stars:int32,'
-        'allele_id:int32'
-        '}',
+    # create a locus value, and key the table by this. Combine [ref, alt] alleles into a list
+    ht = ht.transmute(
+        locus=hl.locus(ht.contig, ht.position),
+        alleles=[ht.reference, ht.alternate],
     )
 
-    # import the table, and transmute to top-level attributes
-    ht = hl.import_table(json_path, no_header=True, types={'f0': schema})
-    ht = ht.transmute(**ht.f0)
-
-    # create a locus value, and key the table by this
-    ht = ht.transmute(locus=hl.locus(ht.contig, ht.position))
     ht = ht.key_by(ht.locus, ht.alleles)
 
     ht = ht.annotate_globals(
         creation_date=datetime.now(tz=TIMEZONE).strftime('%Y-%m-%d'),
+        blacklist=sorted(BLACKLIST) or ['no blacklisted sites'],
     )
 
     # write out to the specified location
-    ht.write(f'{out_path}.ht', overwrite=True)
+    ht.write(out_path, overwrite=True)
+
+    logger.info(f'Wrote ClinVar decisions HailTable to {out_path}')
 
     # read the localised version
-    return hl.read_table(f'{out_path}.ht')
+    return hl.read_table(out_path)
 
 
-def snv_missense_filter(clinvar_table: hl.Table, output_root: str):
-    """
-    takes a clinvar table and a filters to SNV & Pathogenic
-    Writes results to a VCF file
-
-    Args:
-        clinvar_table (hl.Table): the table of re-summarised clinvar loci
-        output_root (str): Path to write files to
-    """
+def write_pm5_vcf(clinvar_table: hl.Table, output_vcf: str):
+    """Takes a clinvar decisions HailTable, filters to SNV & Pathogenic. Writes results to a VCF file."""
 
     # filter to Pathogenic SNVs
-    # there is at least one ClinVar submission which is Pathogenic
-    # without being a changed base?
+    # there is at least one ClinVar submission which is Pathogenic without being a changed base?
     # https://www.ncbi.nlm.nih.gov/clinvar/variation/1705890/
     clinvar_table = clinvar_table.filter(
         (hl.len(clinvar_table.alleles[0]) == 1)
         & (hl.len(clinvar_table.alleles[1]) == 1)
-        & (clinvar_table.info.clinical_significance == Consequence.PATHOGENIC.value),
+        & (clinvar_table.clinical_significance == Consequence.PATHOGENIC.value),
+    )
+
+    # persist the relevant clinvar annotations in INFO (for vcf export)
+    clinvar_table = clinvar_table.transmute(
+        info=hl.struct(
+            allele_id=clinvar_table.allele_id,
+            gold_stars=clinvar_table.gold_stars,
+            clinical_significance=clinvar_table.clinical_significance,
+        ),
     )
 
     # export this data in VCF format
-    vcf_path = f'{output_root}.vcf.bgz'
-    hl.export_vcf(clinvar_table, vcf_path, tabix=True)
-    logger.info(f'Wrote SNV VCF to {vcf_path}')
+    hl.export_vcf(clinvar_table, output_vcf, tabix=True)
+    logger.info(f'Wrote SNV VCF to {output_vcf}')
+
+
+def write_dicts_as_tsv(dicts: list[dict], output_path: str):
+    """
+    Writes a list of dictionaries to a TSV file, with headers.
+    Args:
+        dicts (list[dict]): List of dictionaries to write.
+        output_path (str): Path to write the TSV file.
+    """
+
+    if not dicts:
+        logger.warning('No data to write to TSV.')
+        raise ValueError('No ClinVar decisions present.')
+
+    logger.info(f'Writing {len(dicts)} entries to TSV at {output_path}')
+    with open(output_path, 'w', encoding='utf-8') as tsv_file:
+        # Write header
+        tsv_file.write('\t'.join(TSV_KEYS) + '\n')
+
+        # Write each dictionary as a row
+        for each_dict in dicts:
+            ref, alt = each_dict['alleles']
+            each_dict['reference'] = ref
+            each_dict['alternate'] = alt
+            tsv_file.write('\t'.join(str(each_dict[key]) for key in TSV_KEYS) + '\n')
+
+    logger.info(f'Wrote TSV to {output_path}')
 
 
 def cli_main():
@@ -486,7 +496,7 @@ def cli_main():
     )
     parser.add_argument(
         '-o',
-        help='output root, for table, json, and path-only VCF',
+        help='output root, for table, tsv, and pathogenic-only VCF',
         required=True,
     )
     parser.add_argument(
@@ -513,15 +523,7 @@ def cli_main():
 
 
 def main(subs: str, variants: str, output_root: str, assembly: str):
-    """
-    Redefines what it is to be a clinvar summary
-
-    Args:
-        subs (str): file path to all submissions (gzipped)
-        variants (str): file path to variant summary (gzipped)
-        output_root (str): path to write JSON out to
-        assembly (str): genome build to use
-    """
+    """Parse all ClinVar submissions, and re-summarise with new algorithm."""
     hl.context.init_spark(master='local[*]')
     hl.default_reference(assembly)
 
@@ -563,9 +565,9 @@ def main(subs: str, variants: str, output_root: str, assembly: str):
         # add the decision to the list, inc. variant details
         complete_decisions.append(
             {
-                'alleles': [var_details['ref'], var_details['alt']],
                 'contig': var_details['chrom'],
                 'position': var_details['pos'],
+                'alleles': [var_details['ref'], var_details['alt']],
                 'clinical_significance': all_decisions[var_id][0].value,
                 'gold_stars': all_decisions[var_details['var_id']][1],
                 'allele_id': var_details['allele'],
@@ -577,32 +579,16 @@ def main(subs: str, variants: str, output_root: str, assembly: str):
     # sort all collected decisions, trying to reduce overhead in HT later
     complete_decisions_sorted = sort_decisions(complete_decisions, assembly=assembly)
 
-    # write out the JSON version of these results
-    json_output = f'{output_root}.json'
-    logger.info(f'temp JSON location: {json_output}')
+    tsv_path = f'{output_root}.tsv'
+    write_dicts_as_tsv(complete_decisions_sorted, output_path=tsv_path)
 
-    # open this temp path and write the json contents, line by line
-    # the HT generation will take the file path, not a list of dictionaries
-    with open(json_output, 'w', encoding='utf-8') as handle:
-        for each_dict in complete_decisions_sorted:
-            handle.write(f'{json.dumps(each_dict)}\n')
-
-    logger.info('JSON written to file, parsing into a Hail Table')
-
-    ht = parse_into_table(json_path=json_output, out_path=output_root)
-
-    # persist the relevant clinvar annotations in INFO (for vcf export)
-    ht = ht.transmute(
-        info=hl.struct(
-            allele_id=ht.allele_id,
-            gold_stars=ht.gold_stars,
-            clinical_significance=ht.clinical_significance,
-        ),
-    )
+    ht_output = f'{output_root}.ht'
+    ht = parse_into_table(tsv_path=tsv_path, out_path=ht_output)
 
     # export the pathogenic SNVs as a tabix-indexed VCF
-    logger.info('Writing out Pathogenic SNV VCF')
-    snv_missense_filter(ht, output_root)
+    vcf_output = f'{output_root}.vcf.bgz'
+    logger.info(f'Writing out Pathogenic SNV VCF to {vcf_output}')
+    write_pm5_vcf(ht, vcf_output)
 
 
 if __name__ == '__main__':

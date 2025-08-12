@@ -4,16 +4,17 @@ process PackageForRelease {
 
     input:
         path decisions_ht
+        path decisions_tsv
         path pm5_ht
+        path pm5_tsv
 
     output:
-        path "clinvar_decisions.release.tar"
+        path "clinvar_decisions.release.tar.gz"
 
     // create a new folder, decompress the previous archives, and recompress everything together
     """
     mkdir clinvarbitration_data
-    mv "${pm5_ht}" clinvarbitration_data/
-    mv "${decisions_ht}" clinvarbitration_data/
-    tar -cf clinvar_decisions.release.tar clinvarbitration_data
+    cp -r "${pm5_ht}" "${pm5_tsv}" "${decisions_ht}" "${decisions_tsv}" clinvarbitration_data/
+    tar -czf clinvar_decisions.release.tar.gz clinvarbitration_data
     """
 }

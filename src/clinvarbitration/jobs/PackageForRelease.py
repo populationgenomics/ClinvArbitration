@@ -7,22 +7,21 @@ if TYPE_CHECKING:
 
 
 def package_data_for_release(
-    pm5_ht: Path,
-    clinvar_decisions: Path,
+    pm5: dict[str, Path],
+    clinvar_decisions: dict[str, Path],
     output: Path,
 ) -> 'BashJob':
-    """
-    Localise all the previously generated data into a folder
-    tarball it, and write out as a single file
-    """
+    """Localise all the previously generated data into a folder - tarball it, and write out as a single file."""
 
     batch_instance = hail_batch.get_batch('Run ClinvArbitration')
 
     job = batch_instance.new_bash_job('PackageForRelease')
     job.image(config.config_retrieve(['workflow', 'driver_image'])).storage('10G')
 
-    pm5_ht_local = batch_instance.read_input(pm5_ht)
-    clinvar_decisions_local = batch_instance.read_input(clinvar_decisions)
+    decisions_ht = batch_instance.read_input(clinvar_decisions['clinvar_decisions'])
+    decisions_tsv = batch_instance.read_input(clinvar_decisions['tsv'])
+    pm5_ht = batch_instance.read_input(pm5['ht'])
+    pm5_tsv = batch_instance.read_input(pm5['tsv'])
 
     # create a new folder, move the files into it
     # unpack all the already compressed HTs into it
@@ -30,11 +29,15 @@ def package_data_for_release(
     job.command(
         f"""
         mkdir clinvarbitration_data
-        tar -xf {pm5_ht_local} -C clinvarbitration_data
-        tar -xf {clinvar_decisions_local} -C clinvarbitration_data
+        tar -xf {pm5_ht} -C clinvarbitration_data
+        tar -xf {decisions_ht} -C clinvarbitration_data
+        mv {pm5_tsv} clinvarbitration_data/clinvar_decisions.pm5.tsv
+        mv {decisions_tsv} clinvarbitration_data/clinvar_decisions.tsv
         tar -czf {job.output} \
             clinvarbitration_data/clinvar_decisions.ht \
-            clinvarbitration_data/clinvar_decisions.pm5.ht
+            clinvarbitration_data/clinvar_decisions.pm5.ht \
+            clinvarbitration_data/clinvar_decisions.pm5.tsv \
+            clinvarbitration_data/clinvar_decisions.tsv
     """,
     )
     batch_instance.write_output(job.output, output)

@@ -44,25 +44,24 @@ At this stage we have each allele with a summary and star rating. The allele ID 
 
 * Summarise
 
-  * Retrieve the Submission and Variant files from NCBI's ClinVar FTP server. This is not done in code, but a bash script is provided with an example
-  * Re-summarise all submissions, saving the results as a JSON file & a Hail Table
+  * Retrieve the Submission and Variant files from NCBI's ClinVar FTP server. This is not done in code, but a bash script is provided to automate retrieval.
+  * Re-summarise all submissions, saving the results as a TSV file & a Hail Table
   * Filter the Table to all Pathogenic SNVs, and export the result as a VCF
-  * Hail is used here as an intermediary to generate the VCF, but the process is not dependent on Hail and could be replaced with any other VCF generation tool. The VCF is used as an input to the next step, whilst the Hail Table would be available as a locus-indexed annotation source for a Hail bioinformatics pipeline.
 
 | locus        | alleles    | allele_id | clinical_significance | gold_stars |
 |--------------|------------|-----------|-----------------------|------------|
 | "chr1:12345" | ["A", "G"] | 789       | "Pathogenic"          | 1          |
 
 * Annotate
-  * Annotate the pathogenic SNV VCF with VEP, exporting as a VCF
-  * This step is not addressed by this repository, but is a necessary step to generate the PM5 annotations
+  * Annotate the pathogenic SNV VCF with VEP, exporting as a TSV
 
 * PM5 Re-Index
   * Iterate over all variants in the VCF, identifying all missense variants and their affected codon
-  * Collect a lookup of the ClinVar entries which are relevant to each residue
-  * This creates data approximating this format in both JSON and Hail Table forms:
+  * Collect a lookup of the ClinVar entries relevant to each [transcript + residue] combination
+  * Export this codon-indexed data, so that each [transcript + residue] combination links to all ClinVar pathogenic Missense variants affecting that codon. This is useful for PM5 ACMG criteria, which is an association of _this_ variant with _other_ missense changes at the same residue.
+  * This final column has an arbitrary number of elements, consisting of a `+`-delimited String, each entry being an `AlleleID::GoldStars` string, where `AlleleID` is the unique identifier for the ClinVar allele, and `GoldStars` is the number of stars assigned to that allele.
 
-| Residue affected | ClinVar Alleles                   |
-|------------------|-----------------------------------|
-| ENST12345::123   | AlleleID::#Stars                  |
-| ENST12345::678   | AlleleID::#Stars+AlleleID::#Stars |
+| Transcript | Codon | ClinVar Alleles                          |
+|------------|-------|------------------------------------------|
+| ENST12345  | 123   | AlleleID::GoldStars                      |
+| ENST12345  | 678   | AlleleID::GoldStars+AlleleID::GoldStars  |

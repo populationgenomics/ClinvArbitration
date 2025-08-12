@@ -32,6 +32,7 @@ def generate_new_summary(
             'ht.tar': '{root}.ht.tar',
             'vcf.bgz': '{root}.vcf.bgz',
             'vcf.bgz.tbi': '{root}.vcf.bgz.tbi',
+            'tsv': '{root}.tsv',
         },
     )
 

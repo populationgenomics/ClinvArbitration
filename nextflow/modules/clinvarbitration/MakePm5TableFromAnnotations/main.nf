@@ -8,6 +8,7 @@ process MakePm5TableFromAnnotations {
 
     output:
         path "clinvar_decisions.pm5.ht", emit: "ht"
+        path "clinvar_decisions.pm5.tsv", emit: "tsv"
 
     """
     python3 -m clinvarbitration.scripts.clinvar_by_codon \

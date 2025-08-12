@@ -11,6 +11,7 @@ process ResummariseRawSubmissions {
         path "clinvar_decisions.vcf.bgz", emit: "vcf"
         path "clinvar_decisions.vcf.bgz.tbi", emit: "vcf_idx"
         path "clinvar_decisions.ht", emit: "ht"
+        path "clinvar_decisions.tsv", emit: "tsv"
 
     // Generates
     // clinvar_decisions.vcf.bgz + index - VCF containing only pathogenic SNV entries, feeds into annotation
@@ -21,6 +22,5 @@ process ResummariseRawSubmissions {
         -s "${submission_summary}" \
         -o "clinvar_decisions" \
         --assembly "${params.assembly}"
-    rm clinvar_decisions.json
     """
 }

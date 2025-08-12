@@ -8,22 +8,28 @@ During the creation of [Talos](https://www.github.com/populationgenomics/automat
 
 This repository contains an alternative algorithm ([described here](docs/algorithm.md)) for re-aggregating the individual ClinVar submissions, generating decisions which favour clear assignment of pathogenic/benign ratings instead of defaulting to 'conflicting'. These ratings are not intended as a replacement of ClinVar's own decisions, but may provide value by showing that that though conflicting submissions exist, there is a clear bias towards either benign or pathogenic ratings.
 
-We aim to re-run this process monthly, and publish the resulting files on Zenodo: https://zenodo.org/records/15896156
+We aim to re-run this process monthly, and publish the resulting files on Zenodo You can download this pre-generated bundle here: https://zenodo.org/records/16792026
 
 ## Primary Outputs
 
-* Hail Table of all revised decisions
-* Hail Table of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
+* Hail Table and TSV of all revised decisions
+* Hail Table and TSV of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
 
-## Conversion scripts
+### TSVs
 
-Two scripts are included here to take the Hail Tables and convert them to TSV format:
+1. `clinvar_decisions.tsv`: A tab-separated file with headers, containing our re-summarised ClinVar decisions. Columns:
+   - `contig`: the chromosome or contig of the variant
+   - `position`: the position of the variant on the contig
+   - `reference`: the reference allele at the variant position
+   - `alternate`: the alternate allele at the variant position
+   - `clinical_significance`: the clinical significance of the variant, as determined by our algorithm
+   - `gold_stars`: the number of gold stars assigned to the variant, indicating the quality of the evidence supporting the asserted significance
+   - `allele_id`: the unique identifier for the variant in ClinVar, accessible directly via URL like `http://www.ncbi.nlm.nih.gov/clinvar?term=XXXXXXX[alleleid]`, or through ClinVar's web page using an 'advanced search' field
 
-* [convert_decisions_ht_to_tsv.py](src/clinvarbitration/convert_decisions_ht_to_tsv.py)
-  * Converts the ClinVar decisions Hail Table to a TSV file, columns for Chr, Pos, Ref, Alt, Allele ID, Rating, & Stars
-
-* [convert_pm5_ht_to_tsv.py](src/clinvarbitration/convert_pm5_ht_to_tsv.py)
-  * Converts the PM5 Hail Table to a TSV file, columns for Transcript, Codon, and collected ClinVar IDs
+2. `clinvar_decisions.pm5.tsv`: A tab-separated file with headers, containing our PM5 missense decisions. All ClinVar entries in this file are Pathogenic Missense changes. Columns:
+   - `transcript`: the transcript ID of the gene in which the missense change occurs
+   - `codon`: the codon position of the missense change in that transcript
+   - `clinvar_alleles`: `+`-delimited String, each entry being an `AlleleID::GoldStars` string, where `AlleleID` is the unique identifier for the ClinVar allele, and `GoldStars` is the number of stars assigned to that allele. e.g. `12345::3+67890::1`, indicating that allele `12345` has 3 stars, and allele `67890` has 1 star, and both affect the same codon in the same transcript.
 
 ## Usage
 
@@ -110,7 +116,6 @@ A config file is required containing a few entries, some relating to this workfl
 * `site_blacklist`: list of ClinVar submitters to ignore. Useful in removing noise, or blinding to _self_ submissions
 * `ref_fasta`: required to run bcftools csq. Must match the `genome_build`
 * `genome_build`: used to decide whether ClinVar/Annotation is sourced using GRCh37 or GRCh38 (default)
-
 
 ## Acknowledgements
 

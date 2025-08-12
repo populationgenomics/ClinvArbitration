@@ -76,6 +76,7 @@ class GenerateNewClinvarSummary(stage.MultiCohortStage):
         return {
             'clinvar_decisions': get_output_folder() / 'clinvar_decisions.ht.tar',
             'snv_vcf': get_output_folder() / 'clinvar_decisions.vcf.bgz',
+            'tsv': get_output_folder() / 'clinvar_decisions.tsv',
         }
 
     def queue_jobs(self, mc: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
@@ -125,8 +126,8 @@ class Pm5TableGeneration(stage.MultiCohortStage):
 
     def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
         return {
-            'pm5_ht': get_output_folder() / 'clinvar_decisions.pm5.ht.tar',
-            'pm5_json': get_output_folder() / 'clinvar_decisions.pm5.json',
+            'ht': get_output_folder() / 'clinvar_decisions.pm5.ht.tar',
+            'tsv': get_output_folder() / 'clinvar_decisions.pm5.tsv',
         }
 
     def queue_jobs(self, mc: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
@@ -136,7 +137,7 @@ class Pm5TableGeneration(stage.MultiCohortStage):
 
         job = generate_pm5_data(
             annotated_snvs=annotated_snvs,
-            output_root=str(outputs['pm5_json']).removesuffix('.json'),
+            output_root=str(outputs['tsv']).removesuffix('.tsv'),
         )
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
@@ -167,11 +168,11 @@ class PackageForRelease(stage.MultiCohortStage):
         """
         output = self.expected_outputs(multicohort)
 
-        clinvar_decisions = inputs.as_str(multicohort, GenerateNewClinvarSummary, 'clinvar_decisions')
-        pm5 = inputs.as_str(multicohort, Pm5TableGeneration, 'pm5_ht')
+        clinvar_decisions = inputs.as_dict(multicohort, GenerateNewClinvarSummary)
+        pm5 = inputs.as_dict(multicohort, Pm5TableGeneration)
 
         job = package_data_for_release(
-            pm5_ht=pm5,
+            pm5=pm5,
             clinvar_decisions=clinvar_decisions,
             output=output,
         )
