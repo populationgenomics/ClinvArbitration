@@ -496,7 +496,7 @@ def cli_main():
     )
     parser.add_argument(
         '-o',
-        help='output root, for table, json, and path-only VCF',
+        help='output root, for table, tsv, and pathogenic-only VCF',
         required=True,
     )
     parser.add_argument(
