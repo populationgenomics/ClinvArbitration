@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
-version='2.2.3'
+version="2.2.4"
 requires-python = ">=3.10,<3.11"
 license={ "file" = "LICENSE" }
 classifiers=[
@@ -34,7 +34,7 @@ Repository = "https://github.com/populationgenomics/ClinvArbitration"
 [project.optional-dependencies]
 # various requirements when running cpg-flow/analysis-runner
 test = [
-    'bump2version',
+    'bump-my-version',
     'pre-commit',
     'pytest',
     'pytest-xdist>=3.6.0',
@@ -100,3 +100,26 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 "src/clinvarbitration/stages.py" = ["ARG002"]
 "src/clinvarbitration/nextflow_stages.py" = ["ARG002"]
 "test/**" = ["S101"]
+
+[tool.bumpversion]
+current_version = "2.2.4"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+commit = true
+message = "Bump version: {current_version} → {new_version}"
+commit_args = ""
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version=\"{current_version}\""
+replace = "version=\"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "src/clinvarbitration/__init__.py"
+search = "{current_version}"
+replace = "{new_version}"
+
+[[tool.bumpversion.files]]
+filename = ".github/workflows/docker.yaml"
+search = "VERSION: {current_version}"
+replace = "VERSION: {new_version}"

@@ -52,9 +52,9 @@ USELESS_RATINGS: set[str] = set()
 MAJORITY_RATIO: float = 0.6
 MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
-ORDERED_ALLELES: dict[str, list[str]] = {
-    GRCH38: [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM'],
-    GRCH37: [*list(map(str, range(1, 23))), 'X', 'Y', 'MT'],
+ORDERED_CONTIGS: dict[str, list[str]] = {
+    GRCH38: [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM', 'chrMT'],
+    GRCH37: [*list(map(str, range(1, 23))), 'X', 'Y', 'M', 'MT'],
 }
 TSV_KEYS = ['contig', 'position', 'reference', 'alternate', 'clinical_significance', 'gold_stars', 'allele_id']
 
@@ -130,6 +130,11 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
             continue
 
         chromosome = f'chr{line["Chromosome"]}' if assembly == GRCH38 else line['Chromosome']
+
+        # swap chrM to something Hail will tolerate
+        if chromosome == 'chrMT':
+            chromosome = 'chrM'
+
         ref = line['ReferenceAlleleVCF']
         alt = line['AlternateAlleleVCF']
 
@@ -138,7 +143,7 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
             continue
 
         # skip non-standard chromosomes
-        if chromosome not in ORDERED_ALLELES[assembly]:
+        if chromosome not in ORDERED_CONTIGS[assembly]:
             continue
 
         # skip chromosomal deletions and insertions, or massive indels
@@ -399,7 +404,7 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
 def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
     """Applies dual-layer sorting to the list of all decisions, on chr & pos."""
 
-    return sorted(all_subs, key=lambda x: (ORDERED_ALLELES[assembly].index(x['contig']), x['position']))
+    return sorted(all_subs, key=lambda x: (ORDERED_CONTIGS[assembly].index(x['contig']), x['position']))
 
 
 def parse_into_table(tsv_path: str, out_path: str) -> hl.Table:
