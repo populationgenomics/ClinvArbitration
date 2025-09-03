@@ -440,10 +440,12 @@ def write_pm5_vcf(clinvar_table: hl.Table, output_vcf: str):
     # filter to Pathogenic SNVs
     # there is at least one ClinVar submission which is Pathogenic without being a changed base?
     # https://www.ncbi.nlm.nih.gov/clinvar/variation/1705890/
+    # new behaviour - we're not annotating chrM sites, as the default GTF file doesn't have Mito genes, so no csq
     clinvar_table = clinvar_table.filter(
         (hl.len(clinvar_table.alleles[0]) == 1)
         & (hl.len(clinvar_table.alleles[1]) == 1)
-        & (clinvar_table.clinical_significance == Consequence.PATHOGENIC.value),
+        & (clinvar_table.clinical_significance == Consequence.PATHOGENIC.value)
+        & (clinvar_table.locus.contig != 'chrM'),
     )
 
     # persist the relevant clinvar annotations in INFO (for vcf export)
