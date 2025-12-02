@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils import Path, config, hail_batch
+from cpg_utils import config, hail_batch
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
 
 
 def clinvarbitration_nextflow(
-    output_root: Path,
+    output_root: str,
 ) -> 'BashJob':
     """
     runs the whole process using nextflow, in a single stage
