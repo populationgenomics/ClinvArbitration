@@ -31,10 +31,10 @@ def copy_latest_files(
     job.command(f"""
         set -x
         gcloud config set storage/parallel_composite_upload_enabled False
-        
+
         wget -q {directory}{sub_file} -O submissions
         gcloud storage cp submissions {submissions}
         wget -q {directory}{var_file} -O variants
-        gcloud storage cp - {variants}
+        gcloud storage cp variants {variants}
     """)
     return job
