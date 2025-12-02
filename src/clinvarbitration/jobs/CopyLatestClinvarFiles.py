@@ -29,6 +29,9 @@ def copy_latest_files(
     var_file = 'variant_summary.txt.gz'
 
     job.command(f"""
+        set -x
+        gcloud config set storage/parallel_composite_upload_enabled False
+        
         wget -q {directory}{sub_file} -O submissions
         gcloud storage cp submissions {submissions}
         wget -q {directory}{var_file} -O variants
