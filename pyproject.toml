@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
-version="2.2.4"
+version="2.2.5"
 requires-python = ">=3.10,<3.11"
 license={ "file" = "LICENSE" }
 classifiers=[
@@ -101,7 +101,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 "test/**" = ["S101"]
 
 [tool.bumpversion]
-current_version = "2.2.4"
+current_version = "2.2.5"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 commit = true
