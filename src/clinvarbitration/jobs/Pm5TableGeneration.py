@@ -1,14 +1,16 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils import Path, config, hail_batch
+from cpg_utils import hail_batch
+
+from clinvarbitration.cpg_internal.utils import make_me_a_job
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
 
 
 def generate_pm5_data(
-    annotated_snvs: Path,
-    output_root: Path,
+    annotated_snvs: str,
+    output_folder: str,
 ) -> 'BashJob':
     """Generate PM5 data (index pathogenic missense variants by codon/transcript)."""
 
@@ -16,20 +18,19 @@ def generate_pm5_data(
 
     annotated_snvs_local = batch_instance.read_input(annotated_snvs)
 
-    job = batch_instance.new_bash_job('Pm5TableGeneration')
-    job.image(config.config_retrieve(['workflow', 'driver_image'])).storage('10G')
+    job = make_me_a_job('Pm5TableGeneration').storage('10G')
 
     job.declare_resource_group(output={'ht.tar': '{root}.ht.tar', 'tsv': '{root}.tsv'})
 
     # write both HT and TSV outputs to the same root location
     job.command(f'python3 -m clinvarbitration.scripts.clinvar_by_codon -i {annotated_snvs_local} -o {job.output}')
 
-    # compress the HT and remove as a single file
-    job.command(
-        f'mv {job.output}.ht clinvar_decisions.pm5.ht && tar -cf {job.output}.ht.tar clinvar_decisions.pm5.ht',
+    # compress the HT, move the TSV, and copy everything out in a single command
+    job.command(f"""
+        mv {job.output}.ht clinvar_decisions.pm5.ht && tar -cf clinvar_decisions.pm5.ht.tar clinvar_decisions.pm5.ht
+        mv {job.output}.tsv clinvar_decisions.pm5.tsv
+        gcloud storage cp clinvar_decisions.pm5.tsv clinvar_decisions.pm5.ht.tar {output_folder}
+        """,
     )
-
-    # write both outputs together
-    batch_instance.write_output(job.output, output_root)
 
     return job

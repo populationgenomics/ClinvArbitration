@@ -22,8 +22,9 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from datetime import datetime
 
-import hail as hl
 from loguru import logger
+
+import hail as hl
 
 # I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
@@ -137,7 +138,7 @@ def parse_tsv_into_hail_table(data: str, table_path: str) -> None:
     )
 
     # write out
-    ht.write(f'{table_path}', overwrite=True)
+    ht.write(table_path, overwrite=True)
     logger.info(f'Hail Table written to {table_path}')
 
 
@@ -164,10 +165,7 @@ def main(input_tsv: str, output_root: str, assembly: str):
 
     # now read the same as a Hail Table
     table_path = f'{output_root}.ht'
-    parse_tsv_into_hail_table(
-        data=tsv_path,
-        table_path=table_path,
-    )
+    parse_tsv_into_hail_table(data=tsv_path, table_path=table_path)
 
 
 if __name__ == '__main__':

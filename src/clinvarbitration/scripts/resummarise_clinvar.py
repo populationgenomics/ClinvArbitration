@@ -28,9 +28,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
-import hail as hl
 import pandas as pd
 from loguru import logger
+
+import hail as hl
 
 ASSEMBLY = 'Assembly'
 GRCH37 = 'GRCh37'
