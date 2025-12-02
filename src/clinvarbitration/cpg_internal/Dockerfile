@@ -18,7 +18,7 @@ RUN apt update && apt install --no-install-recommends -y \
     rm -r /var/lib/apt/lists/* && \
     rm -r /var/cache/apt/*
 
-FROM basic AS bcftools_compiler
+FROM base AS bcftools_compiler
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         gcc \
