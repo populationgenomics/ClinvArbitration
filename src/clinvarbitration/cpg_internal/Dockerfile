@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     strip bcftools plugins/*.so && \
     make DESTDIR=/bcftools_install install
 
-FROM basic AS base_bcftools
+FROM base AS base_bcftools
 
 COPY --from=bcftools_compiler /bcftools_install/usr/local/bin/* /usr/local/bin/
 COPY --from=bcftools_compiler /bcftools_install/usr/local/libexec/bcftools/* /usr/local/libexec/bcftools/
