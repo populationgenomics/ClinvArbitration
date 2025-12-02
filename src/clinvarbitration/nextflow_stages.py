@@ -50,6 +50,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
 
 def main(dry_run: bool = False):
     run_workflow(
+        name='clinvarbitration_nextflow',
         stages=[
             ClinvarbitrationNextflow,
         ],

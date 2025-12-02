@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 def clinvarbitration_nextflow(
-    output_root: Path,
+    output_root: str,
 ) -> 'BashJob':
     """
     runs the whole process using nextflow, in a single stage

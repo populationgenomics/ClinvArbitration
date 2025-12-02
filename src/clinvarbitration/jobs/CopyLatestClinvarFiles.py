@@ -27,10 +27,8 @@ def copy_latest_files(
     sub_file = 'submission_summary.txt.gz'
     var_file = 'variant_summary.txt.gz'
 
-    job.command(f'wget -q {directory}{sub_file} -O {job.subs}')
-    job.command(f'wget -q {directory}{var_file} -O {job.vars}')
-
-    batch_instance.write_output(job.subs, submissions)
-    batch_instance.write_output(job.vars, variants)
-
+    job.command(f"""
+        wget -q {directory}{sub_file} -O - | gcloud storage cp - {submissions}
+        wget -q {directory}{var_file} -O - | gcloud storage cp - {variants}
+    """)
     return job

@@ -53,7 +53,7 @@ jobs:
 
       - name: build
         run: |
-          docker build . -f Dockerfile --tag ${{env.IMAGE_NAME}}:${{ github.sha }}
+          docker build . -f src/clinvarbitration/cpg_internal/Dockerfile --tag ${{env.IMAGE_NAME}}:${{ github.sha }}
 
       - name: push main branch build
         if: ${{ github.ref_name == 'main' }}

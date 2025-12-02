@@ -25,6 +25,7 @@ def cli_main():
 
 def main(dry_run: bool = False):
     run_workflow(
+        name='clinvarbitration',
         stages=[
             CopyLatestClinvarFiles,
             GenerateNewClinvarSummary,
