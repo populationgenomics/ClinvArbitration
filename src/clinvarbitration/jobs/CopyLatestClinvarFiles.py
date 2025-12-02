@@ -20,6 +20,7 @@ def copy_latest_files(
     batch_instance = hail_batch.get_batch('Run ClinvArbitration')
 
     job = batch_instance.new_bash_job('CopyLatestClinvarFiles')
+    job.storage('10Gi')
 
     job.image(config.config_retrieve(['workflow', 'driver_image']))
 
@@ -28,7 +29,9 @@ def copy_latest_files(
     var_file = 'variant_summary.txt.gz'
 
     job.command(f"""
-        wget -q {directory}{sub_file} -O - | gcloud storage cp - {submissions}
-        wget -q {directory}{var_file} -O - | gcloud storage cp - {variants}
+        wget -q {directory}{sub_file} -O submissions
+        gcloud storage cp submissions {submissions}
+        wget -q {directory}{var_file} -O variants
+        gcloud storage cp - {variants}
     """)
     return job
