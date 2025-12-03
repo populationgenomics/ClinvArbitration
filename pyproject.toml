@@ -24,7 +24,7 @@ classifiers=[
 
 dependencies=[
     'hail==0.2.134',
-    'cpg-flow==1.1.1',
+    'cpg-flow~=1.1.1',
 ]
 
 [project.urls]
