@@ -164,8 +164,7 @@ def main(input_tsv: str, output_root: str, assembly: str):
     write_results_as_tsv(clinvar_dict, tsv_path)
 
     # now read the same as a Hail Table
-    table_path = f'{output_root}.ht'
-    parse_tsv_into_hail_table(data=tsv_path, table_path=table_path)
+    parse_tsv_into_hail_table(data=tsv_path, table_path=f'{output_root}.ht')
 
 
 if __name__ == '__main__':

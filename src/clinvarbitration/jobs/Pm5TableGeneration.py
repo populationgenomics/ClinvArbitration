@@ -20,16 +20,13 @@ def generate_pm5_data(
 
     job = make_me_a_job('Pm5TableGeneration').storage('10G')
 
-    job.declare_resource_group(output={'ht.tar': '{root}.ht.tar', 'tsv': '{root}.tsv'})
-
     # write both HT and TSV outputs to the same root location
-    job.command(f'python3 -m clinvarbitration.scripts.clinvar_by_codon -i {annotated_snvs_local} -o {job.output}')
+    job.command(f'python3 -m clinvarbitration.scripts.clinvar_by_codon -i {annotated_snvs_local} -o ${{BATCH_TMPDIR}}/clinvar_decisions.pm5')
 
     # compress the HT, move the TSV, and copy everything out in a single command
     job.command(f"""
-        mv {job.output}.ht clinvar_decisions.pm5.ht && tar -cf clinvar_decisions.pm5.ht.tar clinvar_decisions.pm5.ht
-        mv {job.output}.tsv clinvar_decisions.pm5.tsv
-        gcloud storage cp clinvar_decisions.pm5.tsv clinvar_decisions.pm5.ht.tar {output_folder}
+        mv ${{BATCH_TMPDIR}}/clinvar_decisions.pm5.ht clinvar_decisions.pm5.ht && tar -cf clinvar_decisions.pm5.ht.tar clinvar_decisions.pm5.ht
+        gcloud storage cp ${{BATCH_TMPDIR}}/clinvar_decisions.pm5.tsv clinvar_decisions.pm5.ht.tar {output_folder}
         """,
     )
 

@@ -36,7 +36,7 @@ def generate_new_summary(
 
     # don't tar from current location, we'll catch all the tmp pathing
     job.command(f"""
-        mv ${{BATCH_TMPDIR}}/output.ht clinvar_decisions.ht
+        mv ${{BATCH_TMPDIR}}/clinvar_decisions.ht clinvar_decisions.ht
         tar -cf clinvar_decisions.ht.tar clinvar_decisions.ht
         gcloud storage cp \\
             clinvar_decisions.ht.tar \\
