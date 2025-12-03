@@ -5,6 +5,9 @@ FROM python:${PY_VER}-slim-bullseye AS basic
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
+# ClinvArbitration pipeline version.
+ENV VERSION=2.2.6
+
 RUN apt update && apt install --no-install-recommends -y \
         apt-transport-https \
         bzip2 \
