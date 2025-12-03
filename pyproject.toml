@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
-version="2.2.5"
+version="2.2.6"
 requires-python = ">=3.10,<3.11"
 license={ "file" = "LICENSE" }
 classifiers=[
@@ -24,7 +24,7 @@ classifiers=[
 
 dependencies=[
     'hail==0.2.134',
-    'cpg-flow>1',
+    'cpg-flow~=1.1.1',
 ]
 
 [project.urls]
@@ -91,7 +91,11 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+section-order = ["future", "standard-library", "third-party", "hail", "cpg", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+cpg = ["cpg_flow", "cpg_utils"]
+hail = ["hail", "hailtop"]
 
 [tool.ruff.lint.per-file-ignores]
 # suppress the ARG002 "Unused method argument" warning in the stages.py file
@@ -101,7 +105,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 "test/**" = ["S101"]
 
 [tool.bumpversion]
-current_version = "2.2.5"
+current_version = "2.2.6"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 commit = true
@@ -119,6 +123,11 @@ search = "{current_version}"
 replace = "{new_version}"
 
 [[tool.bumpversion.files]]
-filename = ".github/workflows/docker.yaml"
-search = "VERSION: {current_version}"
-replace = "VERSION: {new_version}"
+filename = "Dockerfile"
+search = "{current_version}"
+replace = "{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "src/clinvarbitration/cpg_internal/Dockerfile"
+search = "{current_version}"
+replace = "{new_version}"

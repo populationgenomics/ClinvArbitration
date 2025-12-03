@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils import Path, config, hail_batch
+from cpg_utils import Path, hail_batch
+
+from clinvarbitration.cpg_internal.utils import make_me_a_job
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
@@ -15,8 +17,7 @@ def package_data_for_release(
 
     batch_instance = hail_batch.get_batch('Run ClinvArbitration')
 
-    job = batch_instance.new_bash_job('PackageForRelease')
-    job.image(config.config_retrieve(['workflow', 'driver_image'])).storage('10G')
+    job = make_me_a_job('PackageForRelease').storage('10G')
 
     decisions_ht = batch_instance.read_input(clinvar_decisions['clinvar_decisions'])
     decisions_tsv = batch_instance.read_input(clinvar_decisions['tsv'])
@@ -33,13 +34,14 @@ def package_data_for_release(
         tar -xf {decisions_ht} -C clinvarbitration_data
         mv {pm5_tsv} clinvarbitration_data/clinvar_decisions.pm5.tsv
         mv {decisions_tsv} clinvarbitration_data/clinvar_decisions.tsv
-        tar -czf {job.output} \
+        tar -czf output.tar.gz \
             clinvarbitration_data/clinvar_decisions.ht \
             clinvarbitration_data/clinvar_decisions.pm5.ht \
             clinvarbitration_data/clinvar_decisions.pm5.tsv \
             clinvarbitration_data/clinvar_decisions.tsv
+
+        gcloud storage cp output.tar.gz {output}
     """,
     )
-    batch_instance.write_output(job.output, output)
 
     return job

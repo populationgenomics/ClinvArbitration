@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 
-from cpg_utils import Path, config, hail_batch
+from cpg_utils import Path
+
+from clinvarbitration.cpg_internal.utils import make_me_a_job
 
 if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
@@ -17,24 +19,13 @@ def copy_latest_files(
         submissions (Pathlike): path to write the submission file
         variants (Pathlike): path to write the variant file
     """
-    batch_instance = hail_batch.get_batch('Run ClinvArbitration')
 
-    job = batch_instance.new_bash_job('CopyLatestClinvarFiles')
-    job.storage('10Gi')
-
-    job.image(config.config_retrieve(['workflow', 'driver_image']))
+    job = make_me_a_job('CopyLatestClinvarFiles').storage('10Gi')
 
     directory = 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/'
-    sub_file = 'submission_summary.txt.gz'
-    var_file = 'variant_summary.txt.gz'
 
-    job.command(f"""
-        set -x
-        gcloud config set storage/parallel_composite_upload_enabled False
+    for filename, output_name in [('submission_summary.txt.gz', submissions), ('variant_summary.txt.gz', variants)]:
 
-        wget -q {directory}{sub_file} -O submissions
-        gcloud storage cp submissions {submissions}
-        wget -q {directory}{var_file} -O variants
-        gcloud storage cp variants {variants}
-    """)
+        job.command(f'set -eo pipefail; wget -q {directory}{filename} -O - | gcloud storage cp - {output_name}')
+
     return job

@@ -2,6 +2,9 @@ FROM australia-southeast1-docker.pkg.dev/cpg-common/images/cpg_hail_gcloud:0.2.1
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
+# ClinvArbitration pipeline version.
+ENV VERSION=2.2.6
+
 RUN apt update && apt install --no-install-recommends -y \
         apt-transport-https \
         bzip2 \
@@ -28,9 +31,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
         libssl-dev \
         make \
         zlib1g-dev && \
-    wget https://github.com/samtools/bcftools/releases/download/1.21/bcftools-1.21.tar.bz2 && \
-    tar -xf bcftools-1.21.tar.bz2 && \
-    cd bcftools-1.21 && \
+    wget https://github.com/samtools/bcftools/releases/download/1.22/bcftools-1.22.tar.bz2 && \
+    tar -xf bcftools-1.22.tar.bz2 && \
+    cd bcftools-1.22 && \
     ./configure --enable-libcurl --enable-s3 --enable-gcs && \
     make && \
     strip bcftools plugins/*.so && \

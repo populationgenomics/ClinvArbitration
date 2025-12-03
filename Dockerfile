@@ -5,6 +5,9 @@ FROM python:${PY_VER}-slim-bullseye AS basic
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
+# ClinvArbitration pipeline version.
+ENV VERSION=2.2.6
+
 RUN apt update && apt install --no-install-recommends -y \
         apt-transport-https \
         bzip2 \
@@ -31,9 +34,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
         libssl-dev \
         make \
         zlib1g-dev && \
-    wget https://github.com/samtools/bcftools/releases/download/1.21/bcftools-1.21.tar.bz2 && \
-    tar -xf bcftools-1.21.tar.bz2 && \
-    cd bcftools-1.21 && \
+    wget https://github.com/samtools/bcftools/releases/download/1.22/bcftools-1.22.tar.bz2 && \
+    tar -xf bcftools-1.22.tar.bz2 && \
+    cd bcftools-1.22 && \
     ./configure --enable-libcurl --enable-s3 --enable-gcs && \
     make && \
     strip bcftools plugins/*.so && \
@@ -50,8 +53,7 @@ FROM base_bcftools AS now_build_clinvarbitration
 WORKDIR /clinvarbitration
 
 COPY src src/
-COPY LICENSE README.md .
-COPY pyproject.toml README.md ./
+COPY LICENSE pyproject.toml README.md ./
 
 # pip install but don't retain the cache files
 RUN pip install --no-cache-dir .

@@ -89,7 +89,7 @@ class GenerateNewClinvarSummary(stage.MultiCohortStage):
         job = generate_new_summary(
             var_file=var_file,
             sub_file=sub_file,
-            output_root=str(outputs['clinvar_decisions']).removesuffix('.ht.tar'),
+            output_root=str(get_output_folder()),
         )
         return self.make_outputs(target=mc, data=outputs, jobs=job)
 
@@ -101,8 +101,8 @@ class AnnotateClinvarSnvsWithBcftools(stage.MultiCohortStage):
     this uses BCFtools for speed and re-deployability, instead of VEP
     """
 
-    def expected_outputs(self, mc: targets.MultiCohort) -> Path:
-        return get_output_folder() / 'clinvar_decisions.annotated.tsv'
+    def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
+        return {'annotated': get_output_folder() / 'clinvar_decisions.annotated.tsv'}
 
     def queue_jobs(self, mc: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
         output = self.expected_outputs(mc)
@@ -111,7 +111,7 @@ class AnnotateClinvarSnvsWithBcftools(stage.MultiCohortStage):
 
         job = annotate_clinvar_snvs(
             snv_vcf=snv_vcf,
-            output=output,
+            output=str(output['annotated']),
         )
         return self.make_outputs(target=mc, jobs=job, data=output)
 
@@ -133,11 +133,11 @@ class Pm5TableGeneration(stage.MultiCohortStage):
     def queue_jobs(self, mc: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
         outputs = self.expected_outputs(mc)
 
-        annotated_snvs = inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools)
+        annotated_snvs = inputs.as_str(mc, AnnotateClinvarSnvsWithBcftools, 'annotated')
 
         job = generate_pm5_data(
             annotated_snvs=annotated_snvs,
-            output_root=str(outputs['tsv']).removesuffix('.tsv'),
+            output_folder=str(get_output_folder()),
         )
 
         return self.make_outputs(target=mc, data=outputs, jobs=job)
@@ -163,8 +163,7 @@ class PackageForRelease(stage.MultiCohortStage):
 
     def queue_jobs(self, multicohort: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
         """
-        Localise the two previously generated MatrixTables
-        tarball as a single file, and write out as a single file
+        Localise the two previously generated MatrixTables, tarball as a single file, and write out as a single file.
         """
         output = self.expected_outputs(multicohort)
 
