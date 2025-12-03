@@ -100,11 +100,11 @@ jobs:
         run: |
           docker build . -f src/clinvarbitration/cpg_internal/Dockerfile \
           --build-arg VERSION=${{ matrix.tag }} \
-          --tag ${{ env.IMAGES_PREFIX }}/${{ matrix.name }}:${{github.ref_name}}-${{ matrix.tag }}
+          --tag ${{ env.IMAGES_PREFIX }}/${{ matrix.name }}:${{ matrix.tag }}
 
       - name: 'Push to dev artifactory'
         run: |
-          docker push "${{ env.IMAGES_PREFIX }}/${{ matrix.name }}:${{github.ref_name}}-${{ matrix.tag }}" | tee push.log
+          docker push "${{ env.IMAGES_PREFIX }}/${{ matrix.name }}:${{ matrix.tag }}" | tee push.log
           digest=$(grep 'digest:' push.log | grep -o 'sha256:[0-9a-f]*')
           echo ":package: Link to image:" >> $GITHUB_STEP_SUMMARY
           echo "https://console.cloud.google.com/artifacts/docker/cpg-common/australia-southeast1/images-dev/${{ matrix.name }}/$digest?project=cpg-common" >> $GITHUB_STEP_SUMMARY
