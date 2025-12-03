@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import subprocess
@@ -34,7 +35,6 @@ def get_next_version_tag(folder: str, version: str) -> str:
     full_image_name_archive = f'{base_image_path_archive}/{folder}'
 
     tags_list = []
-    import logging
 
     logging.basicConfig(level=logging.ERROR)
     for full_image_name in [full_image_name_prod, full_image_name_archive]:
