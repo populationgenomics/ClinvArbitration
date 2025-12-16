@@ -6,13 +6,7 @@ from argparse import ArgumentParser
 
 from cpg_flow.workflow import run_workflow
 
-from clinvarbitration.stages import (
-    AnnotateClinvarSnvsWithBcftools,
-    CopyLatestClinvarFiles,
-    GenerateNewClinvarSummary,
-    PackageForRelease,
-    Pm5TableGeneration,
-)
+from clinvarbitration.stages import PackageForRelease
 
 
 def cli_main():
@@ -26,13 +20,7 @@ def cli_main():
 def main(dry_run: bool = False):
     run_workflow(
         name='clinvarbitration',
-        stages=[
-            CopyLatestClinvarFiles,
-            GenerateNewClinvarSummary,
-            AnnotateClinvarSnvsWithBcftools,
-            Pm5TableGeneration,
-            PackageForRelease,
-        ],
+        stages=[PackageForRelease],
         dry_run=dry_run,
     )
 
