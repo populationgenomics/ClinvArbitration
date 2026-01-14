@@ -24,14 +24,16 @@ import zoneinfo
 from argparse import ArgumentParser
 from collections import defaultdict
 from collections.abc import Generator
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-
-import pandas as pd
-from loguru import logger
+from functools import partial
+from itertools import islice
 
 import hail as hl
+import pandas as pd
+from loguru import logger
 
 ASSEMBLY = 'Assembly'
 GRCH37 = 'GRCh37'
@@ -54,10 +56,19 @@ MAJORITY_RATIO: float = 0.6
 MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
 ORDERED_CONTIGS: dict[str, list[str]] = {
-    GRCH38: [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM', 'chrMT'],
+    GRCH38: [f'chr{x}' for x in list(range(1, 23))]
+    + ['chrX', 'chrY', 'chrM', 'chrMT'],
     GRCH37: [*list(map(str, range(1, 23))), 'X', 'Y', 'M', 'MT'],
 }
-TSV_KEYS = ['contig', 'position', 'reference', 'alternate', 'clinical_significance', 'gold_stars', 'allele_id']
+TSV_KEYS = [
+    'contig',
+    'position',
+    'reference',
+    'alternate',
+    'clinical_significance',
+    'gold_stars',
+    'allele_id',
+]
 
 # I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
@@ -89,7 +100,9 @@ class Consequence(Enum):
 
 
 # an example of a qualified blacklist - entries of this type and site will be ignored
-QUALIFIED_BLACKLIST = [(Consequence.BENIGN, ['illumina laboratory services; illumina'])]
+QUALIFIED_BLACKLIST = [
+    (Consequence.BENIGN, ['illumina laboratory services; illumina'])
+]
 
 
 @dataclass
@@ -104,33 +117,56 @@ class Submission:
     review_status: str
 
 
-def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
+def chunk_file(filename: str, chunk_size: int = 10000) -> Generator[list[str], None, None]:
     """
-    Process variant_summary.txt
-     - links the allele ID, Locus/Alleles, and variant ID
-    relevant fields:
-    0 AlleleID
-    20 Chromosome
-    30 VariationID
-    31 Start
-    32 ReferenceAllele
-    33 AlternateAllele
-
+    Generator that yields chunks of lines from a file.
     Args:
-        summary_file (str): path to the gzipped text file
-        assembly (str): genome build to use
-
-    Returns:
-        dictionary of each variant ID to the positional details
+        filename: path to file
+        chunk_size: number of lines per chunk
     """
+    with gzip.open(filename, 'rt') as f:
+        # skip header
+        header = f.readline()
+        chunk = []
+        for line in f:
+            chunk.append(line)
+            if len(chunk) >= chunk_size:
+                yield chunk
+                chunk = []
+        if chunk:
+            yield chunk
 
+
+def get_header(filename: str) -> list[str]:
+    """
+    Reads just the header from a gzipped file.
+    """
+    with gzip.open(filename, 'rt') as handle:
+        for line in handle:
+            # the submission file has multiple header lines, including two that start with "#VariationID".
+            # skip short #-prefixed lines to get to the true header
+            if len(line.split('\t')) < 3:
+                continue
+            if line.startswith('#'):
+                return line[1:].rstrip().split('\t')
+            return line.rstrip().split('\t')
+    return []
+
+
+def process_variant_chunk(chunk: list[str], header: list[str], assembly: str) -> dict:
+    """
+    Worker function to process a chunk of variant_summary.txt lines
+    """
     allele_dict = {}
-
-    for line in dicts_from_gzip(summary_file):
+    for line_str in chunk:
+        line = dict(zip(header, line_str.rstrip().split('\t'), strict=True))
+        
         if line[ASSEMBLY] != assembly:
             continue
 
-        chromosome = f'chr{line["Chromosome"]}' if assembly == GRCH38 else line['Chromosome']
+        chromosome = (
+            f'chr{line["Chromosome"]}' if assembly == GRCH38 else line['Chromosome']
+        )
 
         # swap chrM to something Hail will tolerate
         if chromosome == 'chrMT':
@@ -153,7 +189,7 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
 
         # pull values from the line
         allele_id = int(line['AlleleID'])
-        var_id = int(line['VariationID'])
+        var_id = line['VariationID']
         uniq_var_id = f'{chromosome}_{var_id}'
         pos = int(line['PositionVCF'])
 
@@ -167,31 +203,38 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
                 'ref': ref,
                 'alt': alt,
             }
-
     return allele_dict
 
 
-def dicts_from_gzip(filename: str) -> Generator[dict[str, str], None, None]:
+def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
     """
-    generator for gzip reading
-
+    Process variant_summary.txt in parallel
     Args:
-        filename (str): the gzipped input file
+        summary_file (str): path to the gzipped text file
+        assembly (str): genome build to use
 
     Returns:
-        generator; yields each line as a dictionary
+        dictionary of each variant ID to the positional details
     """
+    
+    header = get_header(summary_file)
 
-    # start with an empty list to please the linter
-    header: list[str] = []
-
-    with gzip.open(filename, 'rt') as handle:
-        for line in handle:
-            if line.startswith('#'):
-                header = line[1:].rstrip().split('\t')
-                continue
-
-            yield dict(zip(header, line.rstrip().split('\t'), strict=True))
+    allele_dict = {}
+    
+    # Use ProcessPoolExecutor to parallelize
+    with ProcessPoolExecutor() as executor:
+        # Create a partial function with fixed arguments
+        worker = partial(process_variant_chunk, header=header, assembly=assembly)
+        
+        # Submit chunks to the executor
+        # Using a larger chunk size for efficiency
+        results = executor.map(worker, chunk_file(summary_file, chunk_size=50000))
+        
+        # Merge results
+        for result in results:
+            allele_dict.update(result)
+            
+    return allele_dict
 
 
 def consequence_decision(subs: list[Submission]) -> Consequence:
@@ -232,8 +275,12 @@ def consequence_decision(subs: list[Submission]) -> Consequence:
             counts[each_sub.classification] += 1
 
     if counts[Consequence.PATHOGENIC] and counts[Consequence.BENIGN]:
-        if (max(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN]) >= (counts['total'] * MAJORITY_RATIO)) and (
-            min(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN]) <= (counts['total'] * MINORITY_RATIO)
+        if (
+            max(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN])
+            >= (counts['total'] * MAJORITY_RATIO)
+        ) and (
+            min(counts[Consequence.PATHOGENIC], counts[Consequence.BENIGN])
+            <= (counts['total'] * MINORITY_RATIO)
         ):
             decision = (
                 Consequence.BENIGN
@@ -292,7 +339,7 @@ def check_stars(subs: list[Submission]) -> int:
     return minimum
 
 
-def process_submission_line(data: dict[str, str]) -> tuple[int, Submission]:
+def process_submission_line(data: dict[str, str]) -> tuple[str, Submission]:
     """
     takes a line, strips out useful content as a 'Submission'. Relevant fields:
     #VariationID
@@ -307,7 +354,7 @@ def process_submission_line(data: dict[str, str]) -> tuple[int, Submission]:
     Returns:
         the allele ID and corresponding Submission details
     """
-    var_id = int(data['VariationID'])
+    var_id = data['VariationID']
     if data['ClinicalSignificance'] in PATH_SIGS:
         classification = Consequence.PATHOGENIC
     elif data['ClinicalSignificance'] in BENIGN_SIGS:
@@ -317,7 +364,9 @@ def process_submission_line(data: dict[str, str]) -> tuple[int, Submission]:
     else:
         classification = Consequence.UNKNOWN
     date = (
-        datetime.strptime(data['DateLastEvaluated'], '%b %d, %Y').replace(tzinfo=TIMEZONE)
+        datetime.strptime(data['DateLastEvaluated'], '%b %d, %Y').replace(
+            tzinfo=TIMEZONE
+        )
         if data['DateLastEvaluated'] != '-'
         else VERY_OLD
     )
@@ -327,27 +376,48 @@ def process_submission_line(data: dict[str, str]) -> tuple[int, Submission]:
     return var_id, Submission(date, sub, classification, rev_status)
 
 
-def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
+def process_submission_chunk(
+    chunk: list[str], header: list[str], var_ids: set[int]
+) -> dict[str, list[Submission]]:
     """
-    takes the per-allele results and aggregates into a hl.Table
-
-    Args:
-        list_of_dicts ():
-
-    Returns:
-        Hail table of the same content, indexed on locus & alleles
+    Worker function to process a chunk of submission_summary.txt lines
     """
+    submission_dict = defaultdict(list)
+    for line_str in chunk:
+        if line_str.startswith('#'):
+            continue
+        line = dict(zip(header, line_str.rstrip().split('\t'), strict=True))
+        var_id, line_sub = process_submission_line(line)
 
-    # convert list of dictionaries to a DataFrame
-    pdf = pd.DataFrame(list_of_dicts)
+        # skip rows where the variantID isn't in this mapping
+        if (
+                (var_id not in var_ids)
+                or (line_sub.submitter in BLACKLIST)
+                or (line_sub.classification == Consequence.UNKNOWN)
+        ):
+            continue
 
-    # convert DataFrame to a Table, keyed on Locus & Alleles
-    return hl.Table.from_pandas(pdf, key=['locus', 'alleles'])
+        # screen out some submitters per-consequence
+        skip = False
+        for consequence, submitters in QUALIFIED_BLACKLIST:
+            if (
+                    line_sub.classification == consequence
+                    and line_sub.submitter in submitters
+            ):
+                skip = True
+                break
+        if skip:
+            continue
+
+        submission_dict[var_id].append(line_sub)
+    return submission_dict
 
 
-def get_all_decisions(submission_file: str, var_ids: set[int]) -> dict[int, list[Submission]]:
+def get_all_decisions(
+    submission_file: str, var_ids: set[int]
+) -> dict[int, list[Submission]]:
     """
-    obtains all submissions per-allele which pass basic criteria
+    obtains all submissions per-allele which pass basic criteria in parallel
         - not a blacklisted submitter
         - not a csq-specific blacklisted submitter
 
@@ -358,27 +428,18 @@ def get_all_decisions(submission_file: str, var_ids: set[int]) -> dict[int, list
     Returns:
         dictionary of var IDs and their corresponding submissions
     """
-
+    header = get_header(submission_file)
     submission_dict = defaultdict(list)
 
-    for line in dicts_from_gzip(submission_file):
-        var_id, line_sub = process_submission_line(line)
-
-        # skip rows where the variantID isn't in this mapping
-        # this saves a little effort on haplotypes, CNVs, and SVs
-        if (
-            (var_id not in var_ids)
-            or (line_sub.submitter in BLACKLIST)
-            or (line_sub.classification == Consequence.UNKNOWN)
-        ):
-            continue
-
-        # screen out some submitters per-consequence
-        for consequence, submitters in QUALIFIED_BLACKLIST:
-            if line_sub.classification == consequence and line_sub.submitter in submitters:
-                continue
-
-        submission_dict[var_id].append(line_sub)
+    with ProcessPoolExecutor() as executor:
+        worker = partial(process_submission_chunk, header=header, var_ids=var_ids)
+        
+        # larger chunk size for submission entries
+        results = executor.map(worker, chunk_file(submission_file, chunk_size=50000))
+        
+        for result in results:
+            for var_id, subs in result.items():
+                submission_dict[var_id].extend(subs)
 
     return submission_dict
 
@@ -395,23 +456,58 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
     """
 
     # apply the date threshold to all submissions
-    date_filt_subs = [sub for sub in subs if sub.date >= ACMG_THRESHOLD or sub.review_status in STRONG_REVIEWS]
+    date_filt_subs = [
+        sub
+        for sub
+        in subs
+        if sub.date >= ACMG_THRESHOLD or sub.review_status in STRONG_REVIEWS
+    ]
 
     # if this contains results, return only those
     # default to returning everything
     return date_filt_subs or subs
 
 
+def process_decision_batch(
+    batch: list[tuple[int, list[Submission]]]
+) -> list[tuple[int, Consequence, int]]:
+    """
+    Worker function to process a batch of decisions
+    """
+    results = []
+    for var_id, submissions in batch:
+        # filter against ACMG date, if appropriate
+        filtered_submissions = acmg_filter_submissions(submissions)
+
+        # obtain an aggregate rating
+        rating = (
+            Consequence.UNCERTAIN
+            if not filtered_submissions
+            else consequence_decision(filtered_submissions)
+        )
+
+        # assess stars in remaining entries
+        stars = check_stars(filtered_submissions)
+        results.append((var_id, rating, stars))
+    return results
+
+
 def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
     """Applies dual-layer sorting to the list of all decisions, on chr & pos."""
 
-    return sorted(all_subs, key=lambda x: (ORDERED_CONTIGS[assembly].index(x['contig']), x['position']))
+    return sorted(
+        all_subs,
+        key=lambda x: (ORDERED_CONTIGS[assembly].index(x['contig']), x['position']),
+    )
 
 
 def parse_into_table(tsv_path: str, out_path: str) -> hl.Table:
     """Takes the file of one clinvar variant per line, processes that line into a table."""
-
-    ht = hl.import_table(tsv_path, types={'position': hl.tint32, 'gold_stars': hl.tint32, 'allele_id': hl.tint32})
+    logger.info(f'Importing table from {tsv_path}')
+    ht = hl.import_table(
+        tsv_path,
+        types={'position': hl.tint32, 'gold_stars': hl.tint32, 'allele_id': hl.tint32},
+    )
 
     # create a locus value, and key the table by this. Combine [ref, alt] alleles into a list
     ht = ht.transmute(
@@ -491,7 +587,9 @@ def write_dicts_as_tsv(dicts: list[dict], output_path: str):
 
 
 def cli_main():
-    parser = ArgumentParser(description='Generates a new clinVar summary from raw submission data')
+    parser = ArgumentParser(
+        description='Generates a new clinVar summary from raw submission data'
+    )
     parser.add_argument(
         '-s',
         help='submission_summary.txt.gz from NCBI',
@@ -530,10 +628,15 @@ def cli_main():
     main(subs=args.s, variants=args.v, output_root=args.o, assembly=args.assembly)
 
 
+def batch_iterable(iterable, batch_size=1000):
+    """Yields batches of items from an iterable."""
+    iterator = iter(iterable)
+    while batch := list(islice(iterator, batch_size)):
+        yield batch
+
+
 def main(subs: str, variants: str, output_root: str, assembly: str):
     """Parse all ClinVar submissions, and re-summarise with new algorithm."""
-    hl.context.init_spark(master='local[*]')
-    hl.default_reference(assembly)
 
     logger.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants, assembly)
@@ -548,17 +651,19 @@ def main(subs: str, variants: str, output_root: str, assembly: str):
     all_decisions = {}
 
     # now filter each set of decisions per allele
-    for var_id, submissions in decision_dict.items():
-        # filter against ACMG date, if appropriate
-        filtered_submissions = acmg_filter_submissions(submissions)
-
-        # obtain an aggregate rating
-        rating = Consequence.UNCERTAIN if not filtered_submissions else consequence_decision(filtered_submissions)
-
-        # assess stars in remaining entries
-        stars = check_stars(filtered_submissions)
-
-        all_decisions[var_id] = (rating, stars)
+    logger.info('Processing decisions in parallel')
+    
+    # Batch the decision processing
+    decision_items = list(decision_dict.items())
+    
+    with ProcessPoolExecutor() as executor:
+        # submit batches to workers
+        # Using a significantly large batch size to reduce overhead
+        results = executor.map(process_decision_batch, batch_iterable(decision_items, batch_size=1000))
+        
+        for batch_result in results:
+            for var_id, rating, stars in batch_result:
+                all_decisions[var_id] = (rating, stars)
 
     # now match those up with the variant coordinates
     logger.info('Matching decisions to variant coordinates')
@@ -590,6 +695,10 @@ def main(subs: str, variants: str, output_root: str, assembly: str):
     tsv_path = f'{output_root}.tsv'
     write_dicts_as_tsv(complete_decisions_sorted, output_path=tsv_path)
 
+    # Initialize Spark here, just before it makes sense to use it
+    hl.context.init_spark(master='local[*]')
+    hl.default_reference(assembly)
+    
     ht_output = f'{output_root}.ht'
     ht = parse_into_table(tsv_path=tsv_path, out_path=ht_output)
 
