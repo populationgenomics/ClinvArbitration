@@ -7,7 +7,7 @@ name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
 version="2.2.6"
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.10,<3.12"
 license={ "file" = "LICENSE" }
 classifiers=[
     'Environment :: Console',
@@ -24,6 +24,7 @@ classifiers=[
 
 dependencies=[
     'cpg-flow~=1.2',
+    'pyspark==3.5.3',
 ]
 
 [project.urls]

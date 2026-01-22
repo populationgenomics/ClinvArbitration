@@ -1,8 +1,8 @@
 default_language_version:
-  python: python3.10
+  python: python3.11
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: check-yaml
         exclude: '\.*conda/.*'
@@ -17,13 +17,13 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.12.0
+    rev: v0.14.13
     hooks:
       - id: ruff
 
   # Static type analysis (as much as it's possible in python using type hints)
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.10.0"
+    rev: "v1.19.1"
     hooks:
       - id: mypy
         args: [--pretty, --show-error-codes, --install-types, --non-interactive]
