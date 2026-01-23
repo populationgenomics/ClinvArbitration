@@ -76,17 +76,14 @@ select = ["A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "W", "ANN", "ARG", "
 fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "ERA", "EXE", "FBT", "ICN", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "UP", "YTT"]
 
 ignore = [
-    "ANN001", # Missing type annotation for function argument
     "ANN101", # Missing type annotation for self in method
     "ANN102", # Missing type annotation for `cls` in classmethod
     "ANN201", # Missing return type annotation for public function
     "ANN204", # Missing type annotation for special method `__init__`
-    "E731", # Do not assign a lambda expression, use a def
     "Q000", # Single quotes found but double quotes preferred
     "PLR0912", # Too many branches (> 12)
     "PLR0913", # Too many arguments in function (> 5)
     "C901", # method is too complex (> 10 conditions)
-    "N999", # invalid module name (not lower-case and potholes)
 ]
 
 [tool.ruff.lint.isort]

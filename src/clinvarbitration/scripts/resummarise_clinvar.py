@@ -532,9 +532,6 @@ def cli_main():
 
 def main(subs: str, variants: str, output_root: str, assembly: str):
     """Parse all ClinVar submissions, and re-summarise with new algorithm."""
-    hl.context.init_spark(master='local[*]')
-    hl.default_reference(assembly)
-
     logger.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants, assembly)
 
@@ -590,6 +587,8 @@ def main(subs: str, variants: str, output_root: str, assembly: str):
     tsv_path = f'{output_root}.tsv'
     write_dicts_as_tsv(complete_decisions_sorted, output_path=tsv_path)
 
+    hl.context.init_spark(master='local[*]')
+    hl.default_reference(assembly)
     ht_output = f'{output_root}.ht'
     ht = parse_into_table(tsv_path=tsv_path, out_path=ht_output)
 

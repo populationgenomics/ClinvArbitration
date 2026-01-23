@@ -1,4 +1,6 @@
 process AnnotateCsqWithBcftools {
+    container params.container
+
     publishDir params.output_dir
 
     input:

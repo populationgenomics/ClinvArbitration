@@ -1,7 +1,7 @@
 process DownloadClinVarFiles {
     container params.container
 
-    publishDir params.large_files, mode: 'copy'
+    publishDir params.data, mode: 'copy'
 
     def timestamp = new java.util.Date().format('yyyy-MM')
 

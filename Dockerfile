@@ -48,11 +48,29 @@ FROM base_bcftools AS now_build_clinvarbitration
 # now do some fun stuff, installing ClinvArbitration
 WORKDIR /clinvarbitration
 
-COPY src src/
-COPY LICENSE pyproject.toml README.md ./
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
-# pip install but don't retain the cache files
-RUN pip install --no-cache-dir .
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
+
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
+
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
+
+# Add in the additional requirements that are most likely to change.
+COPY LICENSE pyproject.toml uv.lock README.md ./
+COPY src src/
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install .
+
+# Place executables in the environment at the front of the path
+ENV PATH="/clinvarbitration/.venv/bin:$PATH"
 
 COPY nextflow nextflow/
 

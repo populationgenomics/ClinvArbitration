@@ -37,7 +37,7 @@ workflow {
     // reinterpret the results using altered heuristics
     ResummariseRawSubmissions(
         ch_variants,
-        ch_submissions,
+        ch_clinvar_sub,
     )
 
     // annotate the SNV VCF using BCFtools

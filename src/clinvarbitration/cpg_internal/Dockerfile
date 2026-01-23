@@ -11,7 +11,7 @@ RUN apt update && apt install --no-install-recommends -y \
         libbz2-1.0 \
         libcurl4 \
         liblzma5 \
-        openjdk-17-jdk-headless \
+        openjdk-11-jdk-headless \
         wget \
         zip && \
     pip install --no-cache-dir -U pip && \

@@ -1,5 +1,5 @@
-
 process MakePm5TableFromAnnotations {
+    container params.container
 
     publishDir params.output_dir, mode: 'copy'
 
