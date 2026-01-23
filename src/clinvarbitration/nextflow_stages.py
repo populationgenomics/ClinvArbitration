@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from cpg_flow.stage import MultiCohortStage, stage
 from cpg_flow.workflow import run_workflow
 
-from clinvarbitration.jobs.ClinvArbitrationNextflow import clinvarbitration_nextflow
+from clinvarbitration.jobs.run_as_nextflow import clinvarbitration_nextflow
 from clinvarbitration.stages import get_output_folder, populate_job_meta
 
 if TYPE_CHECKING:
