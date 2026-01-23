@@ -55,4 +55,4 @@ RUN pip install --no-cache-dir .
 
 COPY nextflow nextflow/
 
-ENV VERSION=2.2.6
+ENV VERSION=2.2.7
