@@ -1,10 +1,9 @@
-
 process AnnotateCsqWithBcftools {
+    container params.container
 
     publishDir params.output_dir
 
     input:
-        // the two input files from ClinVar
         path vcf
         path ref_fa
         path gff3
@@ -15,6 +14,9 @@ process AnnotateCsqWithBcftools {
     """
     bcftools csq \
         -f "${ref_fa}" \
+        --force \
+        --local-csq \
+        --unify-chr-names 'chr,-,chr' \
         -g "${gff3}" \
         "${vcf}" |
     bcftools +split-vep \

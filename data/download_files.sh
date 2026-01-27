@@ -90,14 +90,16 @@ else
   echo "[INFO] ${GRCh38_decompressed} already exists, skipping download."
 fi
 
-# Submissions Summary from ClinVar
-start_download https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/submission_summary.txt.gz
-
-# Variant Summary from ClinVar
-start_download https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz
-
 # Ensembl GFF3 data
-start_download https://ftp.ensembl.org/pub/release-113/gff3/homo_sapiens/Homo_sapiens.GRCh38.113.gff3.gz
+start_download https://ftp.ensembl.org/pub/release-115/gff3/homo_sapiens/Homo_sapiens.GRCh38.115.gff3.gz
+
+THIS_MONTH=$(date '+%Y-%m')
+
+submission_summary="https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/submission_summary.txt.gz"
+variant_summary="https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz"
+
+start_download $submission_summary "submissions_${THIS_MONTH}.txt.gz"
+start_download $variant_summary "variants_${THIS_MONTH}.txt.gz"
 
 await
 

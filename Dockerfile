@@ -1,12 +1,6 @@
-# Any analysis-runner driver image must at least include git.
-ARG PY_VER=${PY_VER:-3.10}
-
-FROM python:${PY_VER}-slim-bullseye AS basic
+FROM python:3.11-slim-bullseye AS basic
 
 ENV PYTHONDONTWRITEBYTECODE=1
-
-# ClinvArbitration pipeline version.
-ENV VERSION=2.2.6
 
 RUN apt update && apt install --no-install-recommends -y \
         apt-transport-https \
@@ -17,7 +11,7 @@ RUN apt update && apt install --no-install-recommends -y \
         libbz2-1.0 \
         libcurl4 \
         liblzma5 \
-        openjdk-17-jdk-headless \
+        openjdk-11-jdk-headless \
         wget \
         zip && \
     pip install --no-cache-dir -U pip && \
@@ -25,6 +19,8 @@ RUN apt update && apt install --no-install-recommends -y \
     rm -r /var/cache/apt/*
 
 FROM basic AS bcftools_compiler
+
+ARG BCFTOOLS_VERSION="1.22"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         gcc \
@@ -34,9 +30,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
         libssl-dev \
         make \
         zlib1g-dev && \
-    wget https://github.com/samtools/bcftools/releases/download/1.22/bcftools-1.22.tar.bz2 && \
-    tar -xf bcftools-1.22.tar.bz2 && \
-    cd bcftools-1.22 && \
+    wget https://github.com/samtools/bcftools/releases/download/${BCFTOOLS_VERSION}/bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
+    tar -xf bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
+    cd bcftools-${BCFTOOLS_VERSION} && \
     ./configure --enable-libcurl --enable-s3 --enable-gcs && \
     make && \
     strip bcftools plugins/*.so && \
@@ -52,10 +48,30 @@ FROM base_bcftools AS now_build_clinvarbitration
 # now do some fun stuff, installing ClinvArbitration
 WORKDIR /clinvarbitration
 
-COPY src src/
-COPY LICENSE pyproject.toml README.md ./
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
-# pip install but don't retain the cache files
-RUN pip install --no-cache-dir .
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
+
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
+
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
+
+# Add in the additional requirements that are most likely to change.
+COPY LICENSE pyproject.toml uv.lock README.md ./
+COPY src src/
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install .
+
+# Place executables in the environment at the front of the path
+ENV PATH="/clinvarbitration/.venv/bin:$PATH"
 
 COPY nextflow nextflow/
+
+ENV VERSION=2.2.7
