@@ -45,6 +45,14 @@ run_nextflow = 'clinvarbitration.stages.nextflow_stages:cli_main'
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/clinvarbitration"]
+exclude = [
+  "data/*.gz",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/data/*.gz",
+]
 
 [tool.hatch.build.targets.wheel.sources]
 "src" = ""
