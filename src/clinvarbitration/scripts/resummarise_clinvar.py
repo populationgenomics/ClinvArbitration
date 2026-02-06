@@ -435,19 +435,20 @@ def parse_into_table(tsv_path: str, out_path: str) -> hl.Table:
     return hl.read_table(out_path)
 
 
-def write_pm5_vcf(clinvar_table: hl.Table, output_vcf: str):
-    """Takes a clinvar decisions HailTable, filters to SNV & Pathogenic. Writes results to a VCF file."""
+def write_vcf(clinvar_table: hl.Table, output_vcf: str, pm5_filter: bool = True):
+    """Takes a clinvar decisions HailTable, optionally filter to SNV & Pathogenic. Writes results to a VCF file."""
 
-    # filter to Pathogenic SNVs
-    # there is at least one ClinVar submission which is Pathogenic without being a changed base?
-    # https://www.ncbi.nlm.nih.gov/clinvar/variation/1705890/
-    # new behaviour - we're not annotating chrM sites, as the default GTF file doesn't have Mito genes, so no csq
-    clinvar_table = clinvar_table.filter(
-        (hl.len(clinvar_table.alleles[0]) == 1)
-        & (hl.len(clinvar_table.alleles[1]) == 1)
-        & (clinvar_table.clinical_significance == Consequence.PATHOGENIC.value)
-        & (clinvar_table.locus.contig != 'chrM'),
-    )
+    if pm5_filter:
+        # filter to Pathogenic SNVs
+        # there is at least one ClinVar submission which is Pathogenic without being a changed base?
+        # https://www.ncbi.nlm.nih.gov/clinvar/variation/1705890/
+        # new behaviour - we're not annotating chrM sites, as the default GTF file doesn't have Mito genes, so no csq
+        clinvar_table = clinvar_table.filter(
+            (hl.len(clinvar_table.alleles[0]) == 1)
+            & (hl.len(clinvar_table.alleles[1]) == 1)
+            & (clinvar_table.clinical_significance == Consequence.PATHOGENIC.value)
+            & (clinvar_table.locus.contig != 'chrM'),
+        )
 
     # persist the relevant clinvar annotations in INFO (for vcf export)
     clinvar_table = clinvar_table.transmute(
@@ -460,7 +461,7 @@ def write_pm5_vcf(clinvar_table: hl.Table, output_vcf: str):
 
     # export this data in VCF format
     hl.export_vcf(clinvar_table, output_vcf, tabix=True)
-    logger.info(f'Wrote SNV VCF to {output_vcf}')
+    logger.info(f'Wrote VCF to {output_vcf}')
 
 
 def write_dicts_as_tsv(dicts: list[dict], output_path: str):
@@ -505,7 +506,7 @@ def cli_main():
     parser.add_argument(
         '-o',
         help='output root, for table, tsv, and pathogenic-only VCF',
-        required=True,
+        default=True,
     )
     parser.add_argument(
         '-b',
@@ -519,6 +520,11 @@ def cli_main():
         default='GRCh38',
         choices=[GRCH37, GRCH38],
     )
+    parser.add_argument(
+        '--all_vcf',
+        help='if provided, write a VCF containing all entries',
+        default=None,
+    )
 
     args = parser.parse_args()
 
@@ -527,10 +533,10 @@ def cli_main():
     if args.b:
         BLACKLIST.update(args.b)
 
-    main(subs=args.s, variants=args.v, output_root=args.o, assembly=args.assembly)
+    main(subs=args.s, variants=args.v, output_root=args.o, assembly=args.assembly, all_vcf=args.all_vcf)
 
 
-def main(subs: str, variants: str, output_root: str, assembly: str):
+def main(subs: str, variants: str, output_root: str, assembly: str, all_vcf: str | None = None):
     """Parse all ClinVar submissions, and re-summarise with new algorithm."""
     logger.info('Getting alleleID-VariantID-Loci from variant summary')
     allele_map = get_allele_locus_map(variants, assembly)
@@ -592,10 +598,14 @@ def main(subs: str, variants: str, output_root: str, assembly: str):
     ht_output = f'{output_root}.ht'
     ht = parse_into_table(tsv_path=tsv_path, out_path=ht_output)
 
+    # write a VCF containing all variants, not just pathogenic SNV (Echtvar use case)
+    if all_vcf:
+        write_vcf(ht, all_vcf, pm5_filter=False)
+
     # export the pathogenic SNVs as a tabix-indexed VCF
     vcf_output = f'{output_root}.vcf.bgz'
     logger.info(f'Writing out Pathogenic SNV VCF to {vcf_output}')
-    write_pm5_vcf(ht, vcf_output)
+    write_vcf(ht, vcf_output)
 
 
 if __name__ == '__main__':
