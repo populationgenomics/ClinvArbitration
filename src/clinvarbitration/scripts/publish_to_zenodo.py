@@ -181,13 +181,13 @@ if __name__ == '__main__':
         description='Publish a new versioned Zenodo record from a local file.',
     )
     parser.add_argument('--record', type=int, help='ID of the existing Zenodo record', required=True)
-    parser.add_argument('--token_secret', help='GCP name for the Zenodo token secret', required=True)
+    parser.add_argument('--secret', help='GCP name for the Zenodo token secret', required=True)
     parser.add_argument('--tarball', type=str, help='path to the file to upload', required=True)
     parser.add_argument('--success', type=str, help='if successful, write new record URL', required=True)
     args = parser.parse_args()
 
     try:
-        main(args.record_id, args.token_secret, args.tarball, args.success)
+        main(args.record_id, args.secret, args.tarball, args.success)
     except Exception as exc:  # noqa: BLE001
         print(f'Error: {exc}', file=sys.stderr)
         sys.exit(1)
