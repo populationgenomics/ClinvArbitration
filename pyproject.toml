@@ -23,8 +23,9 @@ classifiers=[
 ]
 
 dependencies=[
-    'cpg-flow~=1.2',
+    'cpg-flow~=1.3',
     'pyspark==3.5.3',
+    'requests'
 ]
 
 [project.urls]
@@ -36,6 +37,9 @@ test = [
     'pre-commit',
     'pytest',
     'pytest-xdist>=3.6.0',
+]
+cpg = [
+    'google-cloud-secret-manager',  # used to pull secrets for the zenodo publish workflow
 ]
 
 [project.scripts]

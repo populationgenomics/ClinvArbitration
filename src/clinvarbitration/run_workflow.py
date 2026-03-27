@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 from cpg_flow.workflow import run_workflow
 
-from clinvarbitration.stages import PackageForRelease
+from clinvarbitration.stages import GenerateNewZenodoRelease
 
 
 def cli_main():
@@ -20,7 +20,7 @@ def cli_main():
 def main(dry_run: bool = False):
     run_workflow(
         name='clinvarbitration',
-        stages=[PackageForRelease],
+        stages=[GenerateNewZenodoRelease],
         dry_run=dry_run,
     )
 

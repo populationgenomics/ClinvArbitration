@@ -11,6 +11,7 @@ from clinvarbitration.jobs.download_latest_files import copy_latest_files
 from clinvarbitration.jobs.generate_new_summary import generate_new_summary
 from clinvarbitration.jobs.pm5_generation import generate_pm5_data
 from clinvarbitration.jobs.tarball_release import package_data_for_release
+from clinvarbitration.jobs.publish_to_zenodo import draft_new_release
 
 
 @cache
@@ -176,4 +177,29 @@ class PackageForRelease(stage.MultiCohortStage):
             output=output,
         )
 
+        return self.make_outputs(multicohort, data=output, jobs=job)
+
+
+@stage.stage(
+    required_stages=PackageForRelease
+)
+class GenerateNewZenodoRelease(stage.MultiCohortStage):
+    """
+    This Stage takes the tarball generated in the stage above, and automatically drafts, uploads files to, and publishes
+    a new zenodo version.
+    """
+
+    def expected_outputs(self, multicohort: targets.MultiCohort) -> Path:
+        return get_output_folder() / 'zenodo_release.txt'
+
+    def queue_jobs(
+        self,
+        multicohort: targets.MultiCohort,
+        inputs: stage.StageInput,
+    ) -> stage.StageOutput:
+
+        output = self.expected_outputs(multicohort)
+        clinvar_decisions = inputs.as_path(multicohort, PackageForRelease)
+
+        job = draft_new_release(clinvar_decisions, output)
         return self.make_outputs(multicohort, data=output, jobs=job)
