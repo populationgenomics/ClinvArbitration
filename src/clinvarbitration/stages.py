@@ -1,7 +1,6 @@
 from datetime import datetime
 from functools import cache
 from os.path import join
-from venv import create
 
 from cpg_flow import stage, targets
 from cpg_utils import Path, config, to_path
@@ -11,8 +10,8 @@ from clinvarbitration.jobs.annotate_snvs import annotate_clinvar_snvs
 from clinvarbitration.jobs.download_latest_files import copy_latest_files
 from clinvarbitration.jobs.generate_new_summary import generate_new_summary
 from clinvarbitration.jobs.pm5_generation import generate_pm5_data
-from clinvarbitration.jobs.tarball_release import package_data_for_release
 from clinvarbitration.jobs.publish_to_zenodo import create_new_release
+from clinvarbitration.jobs.tarball_release import package_data_for_release
 
 
 @cache
@@ -181,9 +180,7 @@ class PackageForRelease(stage.MultiCohortStage):
         return self.make_outputs(multicohort, data=output, jobs=job)
 
 
-@stage.stage(
-    required_stages=PackageForRelease
-)
+@stage.stage(required_stages=PackageForRelease)
 class GenerateNewZenodoRelease(stage.MultiCohortStage):
     """
     This Stage takes the tarball generated in the stage above, and automatically drafts, uploads files to, and publishes

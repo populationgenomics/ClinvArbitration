@@ -15,13 +15,18 @@ Arguments:
 
 import argparse
 import sys
-from datetime import date
+import zoneinfo
+from datetime import datetime
 from pathlib import Path
 
 import google.auth
 import requests
 from google.cloud import secretmanager
 
+TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
+TODAY = datetime.now(tz=TIMEZONE)
+TODAY_YM = TODAY.strftime('%B %Y')
+TODAY_YMD = TODAY.strftime('%Y-%m-%d')
 ZENODO_BASE = 'https://zenodo.org/api'
 
 
@@ -117,13 +122,13 @@ def upload_file(draft: dict, file_path: Path, token: str) -> None:
 
 def update_metadata(draft_id: int, existing_metadata: dict, token: str) -> None:
     """Update only the version field in the record metadata."""
-    version_label = f"ClinvArbitration data release - {date.today().strftime('%B %Y')}"
+    version_label = f"ClinvArbitration data release - {TODAY_YM}"
     print(f'Setting version label: "{version_label}"')
     metadata = dict(existing_metadata)
     metadata |= {
         'version': version_label,
-        'date': date.today().strftime('%Y-%m-%d'),
-        'publication_date': date.today().strftime('%Y-%m-%d'),
+        'date': TODAY_YMD,
+        'publication_date': TODAY_YMD,
     }
     _ = metadata.pop('dates')
     _ = metadata.pop('doi')
@@ -171,7 +176,7 @@ def main(record: int, token_secret: str, tarball_path: str, success_file: str) -
 
     doi = result.get('doi', 'unknown')
     record_url = result.get('links', {}).get('record_html', 'unknown')
-    print(f'\nPublished successfully.')
+    print('\nPublished successfully.')
     print(f'  DOI:  {doi}')
     print(f'  URL:  {record_url}')
 
