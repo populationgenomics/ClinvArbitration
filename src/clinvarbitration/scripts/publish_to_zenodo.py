@@ -2,10 +2,7 @@
 Publish a new versioned record on Zenodo. Mostly generated via Claude.
 
 Creates a new version of an existing Zenodo record, replaces its files with a
-local tarball, updates the version label, and publishes.
-
-Requirements (not in pyproject.toml — install separately):
-    pip install google-cloud-secret-manager requests
+local tarball, updates the version label, removes  and publishes.
 
 Usage:
     python publish_to_zenodo.py <record_id> <gcp_secret_name> <file_path>
@@ -17,7 +14,6 @@ Arguments:
 """
 
 import argparse
-import os
 import sys
 from datetime import date
 from pathlib import Path
@@ -38,7 +34,7 @@ def get_secret(secret_name: str) -> str:
             'Run `gcloud auth application-default login` or set GOOGLE_CLOUD_PROJECT.',
         )
     client = secretmanager.SecretManagerServiceClient()
-    secret_path = f'projects/{project_id}/secrets/{secret_name}/versions/latest'
+    secret_path = f'projects/{project_id}/secrets/{secret_name}'
     response = client.access_secret_version(name=secret_path)
     return response.payload.data.decode('utf-8').strip()
 
@@ -124,7 +120,14 @@ def update_metadata(draft_id: int, existing_metadata: dict, token: str) -> None:
     version_label = f"ClinvArbitration data release - {date.today().strftime('%B %Y')}"
     print(f'Setting version label: "{version_label}"')
     metadata = dict(existing_metadata)
-    metadata['version'] = version_label
+    metadata |= {
+        'version': version_label,
+        'date': date.today().strftime('%Y-%m-%d'),
+        'publication_date': date.today().strftime('%Y-%m-%d'),
+    }
+    _ = metadata.pop('dates')
+    _ = metadata.pop('doi')
+    _ = metadata.pop('prereserve_doi')
     r = requests.put(
         f'{ZENODO_BASE}/deposit/depositions/{draft_id}',
         params={'access_token': token},
@@ -187,7 +190,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
-        main(args.record_id, args.secret, args.tarball, args.success)
+        main(args.record, args.secret, args.tarball, args.success)
     except Exception as exc:  # noqa: BLE001
         print(f'Error: {exc}', file=sys.stderr)
         sys.exit(1)

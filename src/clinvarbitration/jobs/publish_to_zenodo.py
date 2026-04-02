@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from hailtop.batch.job import BashJob
 
 
-def draft_new_release(
+def create_new_release(
     tarball: Path,
     successfile: Path,
 ) -> 'BashJob':

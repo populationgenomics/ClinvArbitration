@@ -1,6 +1,7 @@
 from datetime import datetime
 from functools import cache
 from os.path import join
+from venv import create
 
 from cpg_flow import stage, targets
 from cpg_utils import Path, config, to_path
@@ -11,7 +12,7 @@ from clinvarbitration.jobs.download_latest_files import copy_latest_files
 from clinvarbitration.jobs.generate_new_summary import generate_new_summary
 from clinvarbitration.jobs.pm5_generation import generate_pm5_data
 from clinvarbitration.jobs.tarball_release import package_data_for_release
-from clinvarbitration.jobs.publish_to_zenodo import draft_new_release
+from clinvarbitration.jobs.publish_to_zenodo import create_new_release
 
 
 @cache
@@ -201,5 +202,5 @@ class GenerateNewZenodoRelease(stage.MultiCohortStage):
         output = self.expected_outputs(multicohort)
         clinvar_decisions = inputs.as_path(multicohort, PackageForRelease)
 
-        job = draft_new_release(clinvar_decisions, output)
+        job = create_new_release(clinvar_decisions, output)
         return self.make_outputs(multicohort, data=output, jobs=job)
