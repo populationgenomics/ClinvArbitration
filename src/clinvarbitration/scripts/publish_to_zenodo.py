@@ -40,7 +40,7 @@ def get_secret(secret_name: str) -> str:
             'Run `gcloud auth application-default login` or set GOOGLE_CLOUD_PROJECT.',
         )
     client = secretmanager.SecretManagerServiceClient()
-    secret_path = f'projects/{project_id}/secrets/{secret_name}'
+    secret_path = f'projects/{project_id}/secrets/{secret_name}/versions/latest'
     response = client.access_secret_version(name=secret_path)
     return response.payload.data.decode('utf-8').strip()
 
