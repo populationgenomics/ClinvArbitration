@@ -8,9 +8,10 @@ Usage:
     python publish_to_zenodo.py <record_id> <gcp_secret_name> <file_path>
 
 Arguments:
-    record_id        Integer ID of any existing version of the Zenodo record
-    gcp_secret_name  Name of the GCP Secret Manager secret holding the Zenodo token
-    file_path        Path to the file to attach to the new record version
+    record    Integer ID of an existing version of the Zenodo record
+    secret    Name of the GCP Secret Manager secret holding the Zenodo token
+    tarball   Path to the file to attach to the new record version
+    success   Path to an output file, to contain the new record URL
 """
 
 import argparse
