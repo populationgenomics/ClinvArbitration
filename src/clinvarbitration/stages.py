@@ -199,6 +199,10 @@ class GenerateNewZenodoRelease(stage.MultiCohortStage):
         inputs: stage.StageInput,
     ) -> stage.StageOutput:
 
+        # quit if we don't intend to publish this
+        if config.config_retrieve(['workflow', 'zenodo_id'], None) is None:
+            return self.make_outputs(multicohort)
+
         output = self.expected_outputs(multicohort)
         clinvar_decisions = inputs.as_path(multicohort, PackageForRelease)
 
