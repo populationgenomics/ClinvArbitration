@@ -131,9 +131,9 @@ def update_metadata(draft_id: int, existing_metadata: dict, token: str) -> None:
         'date': TODAY_YMD,
         'publication_date': TODAY_YMD,
     }
-    _ = metadata.pop('dates')
-    _ = metadata.pop('doi')
-    _ = metadata.pop('prereserve_doi')
+    _ = metadata.pop('dates', None)
+    _ = metadata.pop('doi', None)
+    _ = metadata.pop('prereserve_doi', None)
     r = requests.put(
         f'{ZENODO_BASE}/deposit/depositions/{draft_id}',
         params={'access_token': token},
