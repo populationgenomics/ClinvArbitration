@@ -197,7 +197,10 @@ class GenerateNewZenodoRelease(stage.MultiCohortStage):
     ) -> stage.StageOutput:
 
         # quit if we don't intend to publish this
-        if config.config_retrieve(['workflow', 'zenodo_id'], None) is None:
+        if (
+                config.config_retrieve(['workflow', 'zenodo_id'], None) is None or
+                config.config_retrieve(['workflow', 'zenodo_secret'], None) is None
+        ):
             return self.make_outputs(multicohort)
 
         output = self.expected_outputs(multicohort)

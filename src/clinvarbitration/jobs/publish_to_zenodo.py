@@ -29,7 +29,7 @@ def create_new_release(
     job.command(
         f"""
         set -euo pipefail
-        python -m clinvarbitration.scripts.publish_to_zenodo \\
+        python3 -m clinvarbitration.scripts.publish_to_zenodo \\
             --record {zenodo_record} \\
             --secret {zenodo_secret} \\
             --tarball {tarball_local} \\
