@@ -10,6 +10,7 @@ from clinvarbitration.jobs.annotate_snvs import annotate_clinvar_snvs
 from clinvarbitration.jobs.download_latest_files import copy_latest_files
 from clinvarbitration.jobs.generate_new_summary import generate_new_summary
 from clinvarbitration.jobs.pm5_generation import generate_pm5_data
+from clinvarbitration.jobs.publish_to_zenodo import create_new_release
 from clinvarbitration.jobs.tarball_release import package_data_for_release
 
 
@@ -176,4 +177,34 @@ class PackageForRelease(stage.MultiCohortStage):
             output=output,
         )
 
+        return self.make_outputs(multicohort, data=output, jobs=job)
+
+
+@stage.stage(required_stages=PackageForRelease)
+class GenerateNewZenodoRelease(stage.MultiCohortStage):
+    """
+    This Stage takes the tarball generated in the stage above, and automatically drafts, uploads files to, and publishes
+    a new zenodo version.
+    """
+
+    def expected_outputs(self, multicohort: targets.MultiCohort) -> Path:
+        return get_output_folder() / 'zenodo_release.txt'
+
+    def queue_jobs(
+        self,
+        multicohort: targets.MultiCohort,
+        inputs: stage.StageInput,
+    ) -> stage.StageOutput:
+
+        # quit if we don't intend to publish this
+        if (
+                config.config_retrieve(['workflow', 'zenodo_id'], None) is None or
+                config.config_retrieve(['workflow', 'zenodo_secret'], None) is None
+        ):
+            return self.make_outputs(multicohort)
+
+        output = self.expected_outputs(multicohort)
+        clinvar_decisions = inputs.as_path(multicohort, PackageForRelease)
+
+        job = create_new_release(clinvar_decisions, output)
         return self.make_outputs(multicohort, data=output, jobs=job)

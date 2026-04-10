@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name='clinvarbitration'
 description='CPG ClinVar Re-interpretation'
 readme = "README.md"
-version="2.2.8"
+version="2.2.9"
 requires-python = ">=3.10,<3.12"
 license={ "file" = "LICENSE" }
 classifiers=[
@@ -23,8 +23,9 @@ classifiers=[
 ]
 
 dependencies=[
-    'cpg-flow~=1.2',
+    'cpg-flow~=1.3',
     'pyspark==3.5.3',
+    'requests'
 ]
 
 [project.urls]
@@ -36,6 +37,9 @@ test = [
     'pre-commit',
     'pytest',
     'pytest-xdist>=3.6.0',
+]
+cpg = [
+    'google-cloud-secret-manager',  # used to pull secrets for the zenodo publish workflow
 ]
 
 [project.scripts]
@@ -107,7 +111,7 @@ hail = ["hail", "hailtop"]
 "test/**" = ["S101"]
 
 [tool.bumpversion]
-current_version = "2.2.8"
+current_version = "2.2.9"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 commit = true
