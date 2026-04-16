@@ -10,6 +10,7 @@ Usage:
 Arguments:
     record    Integer ID of an existing version of the Zenodo record
     secret    Name of the GCP Secret Manager secret holding the Zenodo token
+    project   ID of the GCP project ID holding the Zenodo secret
     tarball   Path to the file to attach to the new record version
     success   Path to an output file, to contain the new record URL
 """
