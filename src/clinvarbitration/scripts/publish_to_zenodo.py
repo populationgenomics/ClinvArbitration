@@ -122,6 +122,7 @@ def update_metadata(draft_id: int, existing_metadata: dict, token: str) -> None:
     metadata = dict(existing_metadata)
     metadata |= {
         'version': version_label,
+        'title': version_label,
         'date': TODAY_YMD,
         'publication_date': TODAY_YMD,
     }
