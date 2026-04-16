@@ -28,7 +28,8 @@ def generate_pm5_data(
     """)
 
     # compress the HT, move the TSV, and copy everything out in a single command
-    job.command(f"""
+    job.command(
+        f"""
         mv ${{BATCH_TMPDIR}}/clinvar_decisions.pm5.ht clinvar_decisions.pm5.ht
         tar -cf clinvar_decisions.pm5.ht.tar clinvar_decisions.pm5.ht
         gcloud storage cp ${{BATCH_TMPDIR}}/clinvar_decisions.pm5.tsv clinvar_decisions.pm5.ht.tar {output_folder}

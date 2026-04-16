@@ -19,6 +19,7 @@ repos:
     # Ruff version.
     rev: v0.14.13
     hooks:
+      - id: ruff-format
       - id: ruff
 
   # Static type analysis (as much as it's possible in python using type hints)
