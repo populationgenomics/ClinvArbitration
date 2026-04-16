@@ -55,4 +55,4 @@ RUN pip install --no-cache-dir ".[cpg]"
 
 COPY nextflow nextflow/
 
-ENV VERSION=2.2.9
+ENV VERSION=2.2.10
