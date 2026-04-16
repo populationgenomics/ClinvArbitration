@@ -25,7 +25,6 @@ def copy_latest_files(
     directory = 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/'
 
     for filename, output_name in [('submission_summary.txt.gz', submissions), ('variant_summary.txt.gz', variants)]:
-
         job.command(f'set -eo pipefail; wget -q {directory}{filename} -O - | gcloud storage cp - {output_name}')
 
     return job

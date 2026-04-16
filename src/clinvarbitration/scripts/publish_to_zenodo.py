@@ -20,7 +20,6 @@ import zoneinfo
 from datetime import datetime
 from pathlib import Path
 
-import google.auth
 import requests
 from google.cloud import secretmanager
 
@@ -31,16 +30,10 @@ TODAY_YMD = TODAY.strftime('%Y-%m-%d')
 ZENODO_BASE = 'https://zenodo.org/api'
 
 
-def get_secret(secret_name: str) -> str:
+def get_secret(secret_name: str, secret_project: str) -> str:
     """Retrieve a secret value from GCP Secret Manager using ADC."""
-    _, project_id = google.auth.default()
-    if not project_id:
-        raise RuntimeError(
-            'Could not determine GCP project ID from application default credentials. '
-            'Run `gcloud auth application-default login` or set GOOGLE_CLOUD_PROJECT.',
-        )
     client = secretmanager.SecretManagerServiceClient()
-    secret_path = f'projects/{project_id}/secrets/{secret_name}/versions/latest'
+    secret_path = f'projects/{secret_project}/secrets/{secret_name}/versions/latest'
     response = client.access_secret_version(name=secret_path)
     return response.payload.data.decode('utf-8').strip()
 
@@ -123,7 +116,7 @@ def upload_file(draft: dict, file_path: Path, token: str) -> None:
 
 def update_metadata(draft_id: int, existing_metadata: dict, token: str) -> None:
     """Update only the version field in the record metadata."""
-    version_label = f"ClinvArbitration data release - {TODAY_YM}"
+    version_label = f'ClinvArbitration data release - {TODAY_YM}'
     print(f'Setting version label: "{version_label}"')
     metadata = dict(existing_metadata)
     metadata |= {
@@ -154,13 +147,13 @@ def publish(draft_id: int, token: str) -> dict:
     return _check(r, 'Publish')
 
 
-def main(record: int, token_secret: str, tarball_path: str, success_file: str) -> None:
+def main(record: int, token_secret: str, token_project: str, tarball_path: str, success_file: str) -> None:
     tarball = Path(tarball_path)
     if not tarball.exists():
         raise FileNotFoundError(f'File not found: {tarball}')
 
     print(f'Retrieving Zenodo token from GCP secret "{token_secret}"...')
-    token = get_secret(token_secret)
+    token = get_secret(token_secret, secret_project=token_project)
 
     existing = get_deposition(record, token)
     new_version_resp = create_new_version(record, token)
@@ -191,12 +184,19 @@ if __name__ == '__main__':
     )
     parser.add_argument('--record', type=int, help='ID of the existing Zenodo record', required=True)
     parser.add_argument('--secret', help='GCP name for the Zenodo token secret', required=True)
+    parser.add_argument('--project', help='GCP ID for the Zenodo token project', required=True)
     parser.add_argument('--tarball', type=str, help='path to the file to upload', required=True)
     parser.add_argument('--success', type=str, help='if successful, write new record URL', required=True)
     args = parser.parse_args()
 
     try:
-        main(args.record, args.secret, args.tarball, args.success)
+        main(
+            record=args.record,
+            token_secret=args.secret,
+            token_project=args.project,
+            tarball_path=args.tarball,
+            success_file=args.success,
+        )
     except Exception as exc:  # noqa: BLE001
         print(f'Error: {exc}', file=sys.stderr)
         sys.exit(1)

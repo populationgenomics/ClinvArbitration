@@ -19,3 +19,11 @@ site_blacklist = []
 # genome build, required for bcftools annotation and Hail setup
 # currently only GRCh37 and GRCh38 are supported (including bundled GFF3 files for annotation)
 genome_build = 'GRCh38'
+
+# zenodo record ID to create a new descendant of
+zenodo_id = 19196770
+
+## the GCP project ID containing the secret - specific service account must have permission to read
+#zenodo_project = "secret_project_id"
+## name of the secret to retrieve
+#zenodo_secret = 'secret_name'

@@ -25,6 +25,7 @@ def create_new_release(
 
     # name of the GCP ID to extract a zenodo auth token from
     zenodo_secret = config.config_retrieve(['workflow', 'zenodo_secret'])
+    zenodo_project = config.config_retrieve(['workflow', 'zenodo_project'])
 
     job.command(
         f"""
@@ -32,6 +33,7 @@ def create_new_release(
         python3 -m clinvarbitration.scripts.publish_to_zenodo \\
             --record {zenodo_record} \\
             --secret {zenodo_secret} \\
+            --project {zenodo_project} \\
             --tarball {tarball_local} \\
             --success {job.output}
     """,
