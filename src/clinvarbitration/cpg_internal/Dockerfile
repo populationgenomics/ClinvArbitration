@@ -1,4 +1,4 @@
-FROM australia-southeast1-docker.pkg.dev/cpg-common/images/cpg_hail_gcloud:0.2.137.cpg1-2 AS base
+FROM australia-southeast1-docker.pkg.dev/cpg-common/images/cpg_hail_gcloud:0.2.138.cpg1-1 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -20,7 +20,7 @@ RUN apt update && apt install --no-install-recommends -y \
 
 FROM base AS bcftools_compiler
 
-ARG BCFTOOLS_VER="1.22"
+ARG BCFTOOLS_VER="1.23.1"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         gcc \
@@ -55,4 +55,4 @@ RUN pip install --no-cache-dir ".[cpg]"
 
 COPY nextflow nextflow/
 
-ENV VERSION=2.2.10
+ENV VERSION=2.2.11

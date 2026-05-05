@@ -20,7 +20,7 @@ RUN apt update && apt install --no-install-recommends -y \
 
 FROM basic AS bcftools_compiler
 
-ARG BCFTOOLS_VERSION="1.22"
+ARG BCFTOOLS_VERSION="1.23.1"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         gcc \
@@ -74,4 +74,4 @@ ENV PATH="/clinvarbitration/.venv/bin:$PATH"
 
 COPY nextflow nextflow/
 
-ENV VERSION=2.2.10
+ENV VERSION=2.2.11
