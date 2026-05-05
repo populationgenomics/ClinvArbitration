@@ -74,4 +74,4 @@ ENV PATH="/clinvarbitration/.venv/bin:$PATH"
 
 COPY nextflow nextflow/
 
-ENV VERSION=2.2.10
+ENV VERSION=2.2.11
