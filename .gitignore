@@ -133,3 +133,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+# Added by code-review-graph
+.code-review-graph/

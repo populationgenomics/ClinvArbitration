@@ -75,8 +75,8 @@ class GenerateNewClinvarSummary(stage.MultiCohortStage):
 
     def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
         return {
-            'clinvar_decisions': get_output_folder() / 'clinvar_decisions.ht.tar',
             'snv_vcf': get_output_folder() / 'clinvar_decisions.vcf.bgz',
+            'snv_vcf_index': get_output_folder() / 'clinvar_decisions.vcf.bgz.tbi',
             'tsv': get_output_folder() / 'clinvar_decisions.tsv',
         }
 
@@ -120,14 +120,14 @@ class AnnotateClinvarSnvsWithBcftools(stage.MultiCohortStage):
 @stage.stage(required_stages=[AnnotateClinvarSnvsWithBcftools])
 class Pm5TableGeneration(stage.MultiCohortStage):
     """
-    Reads in the annotated variant data (in TSV format), and generates a PM5 table
+    Reads in the annotated variant data (in TSV format), and generates a PM5 lookup
     For each missense variant, we collect all other pathogenic missense variants affecting the same codon
-    This is output as an HT, and a JSON file of the raw representation
+    This is output as a JSON file, and a TSV of the raw representation
     """
 
     def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
         return {
-            'ht': get_output_folder() / 'clinvar_decisions.pm5.ht.tar',
+            'json': get_output_folder() / 'clinvar_decisions.pm5.json',
             'tsv': get_output_folder() / 'clinvar_decisions.pm5.tsv',
         }
 
@@ -155,7 +155,7 @@ class Pm5TableGeneration(stage.MultiCohortStage):
 class PackageForRelease(stage.MultiCohortStage):
     """
     Takes the data created so far, and packages it up for release
-    This includes the re-summarised decisions, and the PM5 table
+    This includes the re-summarised decisions, and the PM5 lookup
     They are exported as a single tarball, which should be uploaded to the release page monthly
     """
 
@@ -164,7 +164,7 @@ class PackageForRelease(stage.MultiCohortStage):
 
     def queue_jobs(self, multicohort: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
         """
-        Localise the two previously generated MatrixTables, tarball as a single file, and write out as a single file.
+        Localise the previously generated outputs, tarball them, and write out as a single file.
         """
         output = self.expected_outputs(multicohort)
 

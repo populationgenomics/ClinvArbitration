@@ -32,8 +32,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
         return {
             'submission_raw.txt.gz': get_output_folder() / 'clinvar_decisions.submission_raw.txt.gz',
             'variant_raw.txt.gz': get_output_folder() / 'clinvar_decisions.variant_raw.txt.gz',
-            'ht.tar.gz': get_output_folder() / 'clinvar_decisions.ht.tar.gz',
-            'pm5.ht.tar.gz': get_output_folder() / 'clinvar_decisions.pm5.ht.tar.gz',
+            'pm5.json': get_output_folder() / 'clinvar_decisions.pm5.json',
             'vcf.bgz': get_output_folder() / 'clinvar_decisions.vcf.bgz',
             'release.tar.gz': get_output_folder() / 'clinvar_decisions.release.tar.gz',
         }

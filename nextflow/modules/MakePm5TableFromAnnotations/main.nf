@@ -7,7 +7,7 @@ process MakePm5TableFromAnnotations {
         path annotated_snv
 
     output:
-        path "clinvar_decisions.pm5.ht", emit: "ht"
+        path "clinvar_decisions.pm5.json", emit: "json"
         path "clinvar_decisions.pm5.tsv", emit: "tsv"
 
     """

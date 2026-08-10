@@ -52,9 +52,10 @@ workflow {
     )
 
     PackageForRelease(
-        ResummariseRawSubmissions.out.ht,
+        ResummariseRawSubmissions.out.vcf,
+        ResummariseRawSubmissions.out.vcf_idx,
         ResummariseRawSubmissions.out.tsv,
-        MakePm5TableFromAnnotations.out.ht,
+        MakePm5TableFromAnnotations.out.json,
         MakePm5TableFromAnnotations.out.tsv,
     )
 }
