@@ -31,8 +31,8 @@ from enum import Enum
 import pysam
 from loguru import logger
 
+
 ASSEMBLY = 'Assembly'
-GRCH37 = 'GRCh37'
 GRCH38 = 'GRCh38'
 BENIGN_SIGS = {'Benign', 'Likely benign', 'Benign/Likely benign', 'protective'}
 CONFLICTING = 'conflicting data from submitters'
@@ -51,70 +51,37 @@ USELESS_RATINGS: set[str] = set()
 MAJORITY_RATIO: float = 0.6
 MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
-ORDERED_CONTIGS: dict[str, list[str]] = {
-    GRCH38: [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM', 'chrMT'],
-    GRCH37: [*list(map(str, range(1, 23))), 'X', 'Y', 'M', 'MT'],
-}
+ORDERED_CONTIGS: list[str] = [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM', 'chrMT']
 TSV_KEYS = ['contig', 'position', 'reference', 'alternate', 'clinical_significance', 'gold_stars', 'allele_id']
 
 # contig lengths, used to write a valid VCF header
-CONTIG_LENGTHS: dict[str, dict[str, int]] = {
-    GRCH38: {
-        'chr1': 248956422,
-        'chr2': 242193529,
-        'chr3': 198295559,
-        'chr4': 190214555,
-        'chr5': 181538259,
-        'chr6': 170805979,
-        'chr7': 159345973,
-        'chr8': 145138636,
-        'chr9': 138394717,
-        'chr10': 133797422,
-        'chr11': 135086622,
-        'chr12': 133275309,
-        'chr13': 114364328,
-        'chr14': 107043718,
-        'chr15': 101991189,
-        'chr16': 90338345,
-        'chr17': 83257441,
-        'chr18': 80373285,
-        'chr19': 58617616,
-        'chr20': 64444167,
-        'chr21': 46709983,
-        'chr22': 50818468,
-        'chrX': 156040895,
-        'chrY': 57227415,
-        'chrM': 16569,
-        'chrMT': 16569,
-    },
-    GRCH37: {
-        '1': 249250621,
-        '2': 243199373,
-        '3': 198022430,
-        '4': 191154276,
-        '5': 180915260,
-        '6': 171115067,
-        '7': 159138663,
-        '8': 146364022,
-        '9': 141213431,
-        '10': 135534747,
-        '11': 135006516,
-        '12': 133851895,
-        '13': 115169878,
-        '14': 107349540,
-        '15': 102531392,
-        '16': 90354753,
-        '17': 81195210,
-        '18': 78077248,
-        '19': 59128983,
-        '20': 63025520,
-        '21': 48129895,
-        '22': 51304566,
-        'X': 155270560,
-        'Y': 59373566,
-        'M': 16569,
-        'MT': 16569,
-    },
+CONTIG_LENGTHS: dict[str, int] = {
+    'chr1': 248956422,
+    'chr2': 242193529,
+    'chr3': 198295559,
+    'chr4': 190214555,
+    'chr5': 181538259,
+    'chr6': 170805979,
+    'chr7': 159345973,
+    'chr8': 145138636,
+    'chr9': 138394717,
+    'chr10': 133797422,
+    'chr11': 135086622,
+    'chr12': 133275309,
+    'chr13': 114364328,
+    'chr14': 107043718,
+    'chr15': 101991189,
+    'chr16': 90338345,
+    'chr17': 83257441,
+    'chr18': 80373285,
+    'chr19': 58617616,
+    'chr20': 64444167,
+    'chr21': 46709983,
+    'chr22': 50818468,
+    'chrX': 156040895,
+    'chrY': 57227415,
+    'chrM': 16569,
+    'chrMT': 16569,
 }
 
 VCF_INFO_HEADERS = [
@@ -172,7 +139,7 @@ class Submission:
     review_status: str
 
 
-def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
+def get_allele_locus_map(summary_file: str) -> dict:
     """
     Process variant_summary.txt
      - links the allele ID, Locus/Alleles, and variant ID
@@ -186,7 +153,6 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
 
     Args:
         summary_file (str): path to the gzipped text file
-        assembly (str): genome build to use
 
     Returns:
         dictionary of each variant ID to the positional details
@@ -195,10 +161,10 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
     allele_dict = {}
 
     for line in dicts_from_gzip(summary_file):
-        if line[ASSEMBLY] != assembly:
+        if line[ASSEMBLY] != GRCH38:
             continue
 
-        chromosome = f'chr{line["Chromosome"]}' if assembly == GRCH38 else line['Chromosome']
+        chromosome = f'chr{line["Chromosome"]}'
 
         # normalise mitochondrial contig naming
         if chromosome == 'chrMT':
@@ -212,7 +178,7 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
             continue
 
         # skip non-standard chromosomes
-        if chromosome not in ORDERED_CONTIGS[assembly]:
+        if chromosome not in ORDERED_CONTIGS:
             continue
 
         # skip chromosomal deletions and insertions, or massive indels
@@ -452,13 +418,13 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
     return date_filt_subs or subs
 
 
-def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
+def sort_decisions(all_subs: list[dict]) -> list[dict]:
     """Applies dual-layer sorting to the list of all decisions, on chr & pos."""
 
-    return sorted(all_subs, key=lambda x: (ORDERED_CONTIGS[assembly].index(x['contig']), x['position']))
+    return sorted(all_subs, key=lambda x: (ORDERED_CONTIGS.index(x['contig']), x['position']))
 
 
-def generate_vcf_header(contigs: list[str], assembly: str) -> str:
+def generate_vcf_header(contigs: list[str]) -> str:
     """Handwrite a VCF header for the given contigs, mirroring the header Hail used to export."""
 
     header_lines = [
@@ -467,7 +433,7 @@ def generate_vcf_header(contigs: list[str], assembly: str) -> str:
         '##source=ClinvArbitration',
         *VCF_INFO_HEADERS,
         *[
-            f'##contig=<ID={contig},length={CONTIG_LENGTHS[assembly][contig]},assembly={assembly}>'
+            f'##contig=<ID={contig},length={CONTIG_LENGTHS[contig]},assembly=GRCH38>'
             for contig in contigs
         ],
         VCF_COLUMNS,
@@ -475,7 +441,7 @@ def generate_vcf_header(contigs: list[str], assembly: str) -> str:
     return '\n'.join(header_lines) + '\n'
 
 
-def write_vcf(decisions: list[dict], output_vcf: str, assembly: str, pm5_filter: bool = True):
+def write_vcf(decisions: list[dict], output_vcf: str, pm5_filter: bool = True):
     """Takes the sorted clinvar decisions, optionally filter to SNV & Pathogenic. Writes results to an indexed VCF."""
 
     if pm5_filter:
@@ -497,7 +463,7 @@ def write_vcf(decisions: list[dict], output_vcf: str, assembly: str, pm5_filter:
 
     # write header and rows block-gzipped, so the result can be tabix-indexed
     with pysam.BGZFile(output_vcf, 'wb') as handle:
-        handle.write(generate_vcf_header(contigs, assembly).encode())
+        handle.write(generate_vcf_header(contigs).encode())
         for entry in decisions:
             ref, alt = entry['alleles']
             info = ';'.join(
@@ -564,12 +530,6 @@ def cli_main():
         default=[],
     )
     parser.add_argument(
-        '--assembly',
-        help='genome build to use',
-        default='GRCh38',
-        choices=[GRCH37, GRCH38],
-    )
-    parser.add_argument(
         '--all_vcf',
         help='if provided, write a VCF containing all entries',
         default=None,
@@ -582,13 +542,13 @@ def cli_main():
     if args.b:
         BLACKLIST.update(args.b)
 
-    main(subs=args.s, variants=args.v, output_root=args.o, assembly=args.assembly, all_vcf=args.all_vcf)
+    main(subs=args.s, variants=args.v, output_root=args.o, all_vcf=args.all_vcf)
 
 
-def main(subs: str, variants: str, output_root: str, assembly: str, all_vcf: str | None = None):
+def main(subs: str, variants: str, output_root: str, all_vcf: str | None = None):
     """Parse all ClinVar submissions, and re-summarise with new algorithm."""
     logger.info('Getting alleleID-VariantID-Loci from variant summary')
-    allele_map = get_allele_locus_map(variants, assembly)
+    allele_map = get_allele_locus_map(variants)
 
     logger.info('Getting all decisions, indexed on clinvar Var ID')
 
@@ -637,19 +597,19 @@ def main(subs: str, variants: str, output_root: str, assembly: str, all_vcf: str
     logger.info(f'{len(complete_decisions)} ClinVar entries remain')
 
     # sort all collected decisions by contig & position, required for tabix indexing
-    complete_decisions_sorted = sort_decisions(complete_decisions, assembly=assembly)
+    complete_decisions_sorted = sort_decisions(complete_decisions)
 
     tsv_path = f'{output_root}.tsv'
     write_dicts_as_tsv(complete_decisions_sorted, output_path=tsv_path)
 
     # write a VCF containing all variants, not just pathogenic SNV (Echtvar use case)
     if all_vcf:
-        write_vcf(complete_decisions_sorted, all_vcf, assembly=assembly, pm5_filter=False)
+        write_vcf(complete_decisions_sorted, all_vcf, pm5_filter=False)
 
     # export the pathogenic SNVs as a tabix-indexed VCF
     vcf_output = f'{output_root}.vcf.bgz'
     logger.info(f'Writing out Pathogenic SNV VCF to {vcf_output}')
-    write_vcf(complete_decisions_sorted, vcf_output, assembly=assembly)
+    write_vcf(complete_decisions_sorted, vcf_output)
 
 
 if __name__ == '__main__':

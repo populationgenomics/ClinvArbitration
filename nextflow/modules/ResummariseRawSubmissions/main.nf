@@ -21,7 +21,6 @@ process ResummariseRawSubmissions {
         python3 -m clinvarbitration.scripts.resummarise_clinvar \
             -v "${variant_summary}" \
             -s "${submission_summary}" \
-            -o "clinvar_decisions" \
-            --assembly "${params.assembly}"
+            -o "clinvar_decisions"
         """
 }
