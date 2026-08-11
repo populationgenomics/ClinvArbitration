@@ -521,7 +521,7 @@ def cli_main():
     parser.add_argument(
         '-o',
         help='output root, for tsv and pathogenic-only VCF',
-        default=True,
+        required=True,
     )
     parser.add_argument(
         '-b',

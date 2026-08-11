@@ -25,7 +25,7 @@ classifiers=[
 dependencies=[
     'loguru',
     'pysam>=0.22',
-    'requests'
+    'requests',
 ]
 
 [project.urls]
@@ -45,8 +45,8 @@ cpg = [
 
 [project.scripts]
 # sets off the whole workflow in cpg-flow orchestrated Stages
-run_workflow = 'clinvarbitration.run_workflow:cli_main'
-run_nextflow = 'clinvarbitration.stages.nextflow_stages:cli_main'
+run_clinvarbitration = 'clinvarbitration.cpg_internal.run_workflow:cli_main'
+run_nf_clinvarbitration = 'clinvarbitration.cpg_internal.nextflow_stages:cli_main'
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/clinvarbitration"]
@@ -56,7 +56,7 @@ exclude = [
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-  "/data/*.gz",
+  "data/*.gz",
 ]
 
 [tool.hatch.build.targets.wheel.sources]

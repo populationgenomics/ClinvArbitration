@@ -6,12 +6,12 @@ from cpg_flow import stage, targets
 from cpg_utils import Path, config, to_path
 
 from clinvarbitration import __version__ as clinvarbitration_version
-from clinvarbitration.jobs.annotate_snvs import annotate_clinvar_snvs
-from clinvarbitration.jobs.download_latest_files import copy_latest_files
-from clinvarbitration.jobs.generate_new_summary import generate_new_summary
-from clinvarbitration.jobs.pm5_generation import generate_pm5_data
-from clinvarbitration.jobs.publish_to_zenodo import create_new_release
-from clinvarbitration.jobs.tarball_release import package_data_for_release
+from clinvarbitration.cpg_internal.jobs.annotate_snvs import annotate_clinvar_snvs
+from clinvarbitration.cpg_internal.jobs.download_latest_files import copy_latest_files
+from clinvarbitration.cpg_internal.jobs.generate_new_summary import generate_new_summary
+from clinvarbitration.cpg_internal.jobs.pm5_generation import generate_pm5_data
+from clinvarbitration.cpg_internal.jobs.publish_to_zenodo import create_new_release
+from clinvarbitration.cpg_internal.jobs.tarball_release import package_data_for_release
 
 
 @cache
