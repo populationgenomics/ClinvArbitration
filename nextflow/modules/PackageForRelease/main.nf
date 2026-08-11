@@ -12,10 +12,11 @@ process PackageForRelease {
     output:
         path "clinvar_decisions.release.tar.gz"
 
-    // create a new folder, and compress everything together
-    """
-    mkdir clinvarbitration_data
-    cp "${decisions_vcf}" "${decisions_vcf_idx}" "${decisions_tsv}" "${pm5_json}" "${pm5_tsv}" clinvarbitration_data/
-    tar -czf clinvar_decisions.release.tar.gz clinvarbitration_data
-    """
+    script:
+        // create a new folder, and compress everything together
+        """
+        mkdir clinvarbitration_data
+        cp "${decisions_vcf}" "${decisions_vcf_idx}" "${decisions_tsv}" "${pm5_json}" "${pm5_tsv}" clinvarbitration_data/
+        tar -czf clinvar_decisions.release.tar.gz clinvarbitration_data
+        """
 }

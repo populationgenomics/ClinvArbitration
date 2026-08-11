@@ -16,11 +16,12 @@ process ResummariseRawSubmissions {
     // Generates
     // clinvar_decisions.vcf.bgz + index - VCF containing only pathogenic SNV entries, feeds into annotation
     // clinvar_decisions.tsv - a TSV containing the summarised data entries
-    """
-    python3 -m clinvarbitration.scripts.resummarise_clinvar \
-        -v "${variant_summary}" \
-        -s "${submission_summary}" \
-        -o "clinvar_decisions" \
-        --assembly "${params.assembly}"
-    """
+    script:
+        """
+        python3 -m clinvarbitration.scripts.resummarise_clinvar \
+            -v "${variant_summary}" \
+            -s "${submission_summary}" \
+            -o "clinvar_decisions" \
+            --assembly "${params.assembly}"
+        """
 }

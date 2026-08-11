@@ -10,9 +10,10 @@ process MakePm5TableFromAnnotations {
         path "clinvar_decisions.pm5.json", emit: "json"
         path "clinvar_decisions.pm5.tsv", emit: "tsv"
 
-    """
-    python3 -m clinvarbitration.scripts.clinvar_by_codon \
-        -i "${annotated_snv}" \
-        -o clinvar_decisions.pm5
-    """
+    script:
+        """
+        python3 -m clinvarbitration.scripts.clinvar_by_codon \
+            -i "${annotated_snv}" \
+            -o clinvar_decisions.pm5
+        """
 }
