@@ -57,12 +57,3 @@ workflow {
         MakePm5TableFromAnnotations.out.tsv,
     )
 }
-
-
-// this triggers if "--help" is used
-def check_params() {
-    if( params.remove('help') ) {
-        params.each{ k, v -> println "params.${k.padRight(25)} = ${v}" }
-        exit 0
-    }
-}

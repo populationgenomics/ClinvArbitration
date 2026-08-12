@@ -141,7 +141,7 @@ def test_write_vcf(tmp_path: Path):
     ]
 
     vcf_path = str(tmp_path / 'decisions.vcf.bgz')
-    write_vcf(decisions, vcf_path, assembly='GRCh38')
+    write_vcf(decisions, vcf_path)
 
     with gzip_open(vcf_path, 'rt') as handle:
         lines = [line.rstrip() for line in handle]
@@ -186,7 +186,7 @@ def test_write_vcf_unfiltered(tmp_path: Path):
     ]
 
     vcf_path = str(tmp_path / 'all.vcf.bgz')
-    write_vcf(decisions, vcf_path, assembly='GRCh38', pm5_filter=False)
+    write_vcf(decisions, vcf_path, pm5_filter=False)
 
     with gzip_open(vcf_path, 'rt') as handle:
         records = [line.rstrip() for line in handle if not line.startswith('#')]

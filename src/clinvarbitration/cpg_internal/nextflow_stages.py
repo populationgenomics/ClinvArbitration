@@ -27,7 +27,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
 
     def expected_outputs(
         self,
-        multicohort: 'MultiCohort',
+        _multicohort: 'MultiCohort',
     ) -> 'dict[str, Path]':
         return {
             'submission_raw.txt.gz': get_output_folder() / 'clinvar_decisions.submission_raw.txt.gz',
@@ -40,7 +40,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
     def queue_jobs(
         self,
         multicohort: 'MultiCohort',
-        inputs: 'StageInput',
+        _inputs: 'StageInput',
     ) -> 'StageOutput':
         outputs = self.expected_outputs(multicohort)
         job = clinvarbitration_nextflow(output_root=str(outputs['release.tar.gz']).removesuffix('.release.tar.gz'))
