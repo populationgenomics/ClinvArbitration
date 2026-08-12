@@ -11,7 +11,6 @@ RUN apt update && apt install --no-install-recommends -y \
         libbz2-1.0 \
         libcurl4 \
         liblzma5 \
-        openjdk-11-jdk-headless \
         wget \
         zip && \
     pip install --no-cache-dir -U pip && \
@@ -20,7 +19,7 @@ RUN apt update && apt install --no-install-recommends -y \
 
 FROM basic AS bcftools_compiler
 
-ARG BCFTOOLS_VERSION="1.23.1"
+ARG BCFTOOLS_VERSION="1.24"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         gcc \
@@ -74,4 +73,4 @@ ENV PATH="/clinvarbitration/.venv/bin:$PATH"
 
 COPY nextflow nextflow/
 
-ENV VERSION=2.2.11
+ENV VERSION=3.0.0

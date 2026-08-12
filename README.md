@@ -12,8 +12,8 @@ We aim to re-run this process monthly, and publish the resulting files on Zenodo
 
 ## Primary Outputs
 
-* Hail Table and TSV of all revised decisions
-* Hail Table and TSV of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
+* Tabix-indexed VCF and TSV of all revised decisions
+* JSON and TSV of all Pathogenic missense changes, indexed on Transcript and Codon. This is usable as a PM5 annotation resource.
 
 ### TSVs
 
@@ -30,6 +30,18 @@ We aim to re-run this process monthly, and publish the resulting files on Zenodo
    - `transcript`: the transcript ID of the gene in which the missense change occurs
    - `codon`: the codon position of the missense change in that transcript
    - `clinvar_alleles`: `+`-delimited String, each entry being an `AlleleID::GoldStars` string, where `AlleleID` is the unique identifier for the ClinVar allele, and `GoldStars` is the number of stars assigned to that allele. e.g. `12345::3+67890::1`, indicating that allele `12345` has 3 stars, and allele `67890` has 1 star, and both affect the same codon in the same transcript.
+
+### VCF
+
+`clinvar_decisions.vcf.bgz` (with accompanying `.tbi` index): a block-gzipped VCF containing the Pathogenic SNV subset of the revised decisions, usable directly as an annotation source. Each entry carries the re-summarised data as INFO fields: `allele_id`, `gold_stars`, and `clinical_significance`.
+
+### JSON
+
+`clinvar_decisions.pm5.json`: the PM5 resource as a single JSON object, mapping `"Transcript::Codon"` to the same `+`-delimited allele String as the PM5 TSV, e.g.
+
+```json
+{"ENST00000123456::100": "12345::3+67890::1"}
+```
 
 ## Usage
 
@@ -92,9 +104,9 @@ nextflow -c nextflow/nextflow.config \
 
 Internally at CPG, this workflow is run using [CPG-Flow](https://github.com/populationgenomics/cpg-flow), an in-house Hail Batch based workflow executor. The following elements relate to that workflow:
 
-* an [example config file](src/clinvarbitration/config_template.toml), with enough entries populated that a standard CPG user could dry-run the workflow locally
-* a [workflow runner script](src/clinvarbitration/run_workflow.py)
-* a definition of all [workflow stages](src/clinvarbitration/stages.py)
+* an [example config file](src/clinvarbitration/cpg_internal/config_template.toml), with enough entries populated that a standard CPG user could dry-run the workflow locally
+* a [workflow runner script](src/clinvarbitration/cpg_internal/run_workflow.py)
+* a definition of all [workflow stages](src/clinvarbitration/cpg_internal/stages.py)
 
 The intention is that once the Dockerfile within this repository is used, this workflow can be triggered like so:
 

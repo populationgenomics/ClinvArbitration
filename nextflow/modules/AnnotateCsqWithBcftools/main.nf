@@ -11,19 +11,20 @@ process AnnotateCsqWithBcftools {
     output:
         path "clinvar_decisions.annotated.tsv"
 
-    """
-    bcftools csq \
-        -f "${ref_fa}" \
-        --force \
-        --local-csq \
-        --unify-chr-names 'chr,-,chr' \
-        -g "${gff3}" \
-        "${vcf}" |
-    bcftools +split-vep \
-        -d \
-        -s :missense \
-        -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" \
-        - \
-        > clinvar_decisions.annotated.tsv
-    """
+    script:
+        """
+        bcftools csq \
+            -f "${ref_fa}" \
+            --force \
+            --local-csq \
+            --unify-chr-names 'chr,-,chr' \
+            -g "${gff3}" \
+            "${vcf}" |
+        bcftools +split-vep \
+            -d \
+            -s :missense \
+            -f "%transcript\t%amino_acid_change\t%allele_id\t%gold_stars\n" \
+            - \
+            > clinvar_decisions.annotated.tsv
+        """
 }

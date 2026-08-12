@@ -10,8 +10,6 @@ include { ResummariseRawSubmissions } from './modules/ResummariseRawSubmissions/
 
 params.publish_mode = 'copy'
 
-check_params()
-
 workflow {
 	// These files are all downloaded by the script `data/download_files.sh`, run that prior to starting the workflow
 	ch_gff3 = channel.fromPath(params.gff3, checkIfExists:true)
@@ -22,14 +20,14 @@ workflow {
     String varfile = "${params.data}/variants_${current_month}.txt.gz"
 
     if (file(subfile).exists() && file(varfile).exists()) {
-        ch_clinvar_sub = Channel.fromPath(subfile)
-        ch_variants = Channel.fromPath(varfile)
+        ch_clinvar_sub = channel.fromPath(subfile)
+        ch_variants = channel.fromPath(varfile)
     } else {
         println "Attempting to download ClinVar raw data, requires internet connection."
         println "If this step fails, try re-running download_files.sh in the `data` directory."
 
         // this step requires an internet connection, which may be problematic at some sites
-        DownloadClinVarFiles()
+        DownloadClinVarFiles(current_month)
         ch_clinvar_sub = DownloadClinVarFiles.out.submissions
         ch_variants = DownloadClinVarFiles.out.variants
     }
@@ -52,18 +50,10 @@ workflow {
     )
 
     PackageForRelease(
-        ResummariseRawSubmissions.out.ht,
+        ResummariseRawSubmissions.out.vcf,
+        ResummariseRawSubmissions.out.vcf_idx,
         ResummariseRawSubmissions.out.tsv,
-        MakePm5TableFromAnnotations.out.ht,
+        MakePm5TableFromAnnotations.out.json,
         MakePm5TableFromAnnotations.out.tsv,
     )
-}
-
-
-// this triggers if "--help" is used
-def check_params() {
-    if( params.remove('help') ) {
-        params.each{ k, v -> println "params.${k.padRight(25)} = ${v}" }
-        exit 0
-    }
 }
