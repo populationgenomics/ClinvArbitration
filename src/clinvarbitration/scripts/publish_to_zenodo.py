@@ -14,7 +14,7 @@ Arguments:
     project   ID of the GCP project ID holding the Zenodo secret
     tarball   Path to the file to attach to the new record version
     success   Path to an output file, to contain the new record URL
-    token     A naked auth token, alternative to secret + project. Use caution with this option when running in a logged environment
+    token     A naked auth token, alternative to secret + project. Use caution in a logged environment
 """
 
 import argparse
@@ -266,7 +266,14 @@ def publish(session: requests.Session, draft_id: int, token: str) -> dict:
     return _check(r, 'Publish')
 
 
-def main(record: int, token_secret: str, token_project: str, tarball_path: str, success_file: str, the_token: str | None = None) -> None:
+def main(
+    record: int,
+    token_secret: str,
+    token_project: str,
+    tarball_path: str,
+    success_file: str,
+    the_token: str | None = None,
+) -> None:
     tarball = Path(tarball_path)
     if not tarball.exists():
         raise FileNotFoundError(f'File not found: {tarball}')
