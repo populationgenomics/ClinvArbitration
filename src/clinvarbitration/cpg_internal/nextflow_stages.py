@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from cpg_flow.stage import MultiCohortStage, stage
 from cpg_flow.workflow import run_workflow
 
-from clinvarbitration.jobs.run_as_nextflow import clinvarbitration_nextflow
-from clinvarbitration.stages import get_output_folder, populate_job_meta
+from clinvarbitration.cpg_internal.jobs.run_as_nextflow import clinvarbitration_nextflow
+from clinvarbitration.cpg_internal.stages import get_output_folder, populate_job_meta
 
 if TYPE_CHECKING:
     from cpg_flow.stage import StageInput, StageOutput
@@ -27,13 +27,12 @@ class ClinvarbitrationNextflow(MultiCohortStage):
 
     def expected_outputs(
         self,
-        multicohort: 'MultiCohort',
+        _multicohort: 'MultiCohort',
     ) -> 'dict[str, Path]':
         return {
             'submission_raw.txt.gz': get_output_folder() / 'clinvar_decisions.submission_raw.txt.gz',
             'variant_raw.txt.gz': get_output_folder() / 'clinvar_decisions.variant_raw.txt.gz',
-            'ht.tar.gz': get_output_folder() / 'clinvar_decisions.ht.tar.gz',
-            'pm5.ht.tar.gz': get_output_folder() / 'clinvar_decisions.pm5.ht.tar.gz',
+            'pm5.json': get_output_folder() / 'clinvar_decisions.pm5.json',
             'vcf.bgz': get_output_folder() / 'clinvar_decisions.vcf.bgz',
             'release.tar.gz': get_output_folder() / 'clinvar_decisions.release.tar.gz',
         }
@@ -41,7 +40,7 @@ class ClinvarbitrationNextflow(MultiCohortStage):
     def queue_jobs(
         self,
         multicohort: 'MultiCohort',
-        inputs: 'StageInput',
+        _inputs: 'StageInput',
     ) -> 'StageOutput':
         outputs = self.expected_outputs(multicohort)
         job = clinvarbitration_nextflow(output_root=str(outputs['release.tar.gz']).removesuffix('.release.tar.gz'))

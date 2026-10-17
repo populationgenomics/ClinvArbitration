@@ -40,17 +40,17 @@ The re-summary is rapid, and can be repeated at regular intervals, taking the la
    * If any submissions `Criteria Provided` -> `1 stars`
    * Default -> `0 Stars`
 
-At this stage we have each allele with a summary and star rating. The allele ID is matched up with the corresponding variant coordinates and ref/alt alleles from the variant summary file, then the whole object is written in multiple forms: as a Hail Table, indexed on Locus and Alleles, ready to be used in annotation within Hail; as a JSON file containing one dictionary per line, each representing one new entry; as a VCF containing all Pathogenic-rated SNVs (for use in the subsequent PM5 ACMG criteria step).
+At this stage we have each allele with a summary and star rating. The allele ID is matched up with the corresponding variant coordinates and ref/alt alleles from the variant summary file, then the whole object is written in multiple forms: as a TSV file, one row per variant; and as a tabix-indexed VCF containing all Pathogenic-rated SNVs (for use in the subsequent PM5 ACMG criteria step), with the re-summarised data stored as INFO fields.
 
 * Summarise
 
   * Retrieve the Submission and Variant files from NCBI's ClinVar FTP server. This is not done in code, but a bash script is provided to automate retrieval.
-  * Re-summarise all submissions, saving the results as a TSV file & a Hail Table
-  * Filter the Table to all Pathogenic SNVs, and export the result as a VCF
+  * Re-summarise all submissions, saving the results as a TSV file
+  * Filter the results to all Pathogenic SNVs, and export as a tabix-indexed VCF
 
-| locus        | alleles    | allele_id | clinical_significance | gold_stars |
-|--------------|------------|-----------|-----------------------|------------|
-| "chr1:12345" | ["A", "G"] | 789       | "Pathogenic"          | 1          |
+| contig | position | reference | alternate | allele_id | clinical_significance | gold_stars |
+|--------|----------|-----------|-----------|-----------|-----------------------|------------|
+| "chr1" | 12345    | "A"       | "G"       | 789       | "Pathogenic"          | 1          |
 
 * Annotate
   * Annotate the pathogenic SNV VCF with VEP, exporting as a TSV
@@ -58,7 +58,7 @@ At this stage we have each allele with a summary and star rating. The allele ID 
 * PM5 Re-Index
   * Iterate over all variants in the VCF, identifying all missense variants and their affected codon
   * Collect a lookup of the ClinVar entries relevant to each [transcript + residue] combination
-  * Export this codon-indexed data, so that each [transcript + residue] combination links to all ClinVar pathogenic Missense variants affecting that codon. This is useful for PM5 ACMG criteria, which is an association of _this_ variant with _other_ missense changes at the same residue.
+  * Export this codon-indexed data as a TSV and a JSON file, so that each [transcript + residue] combination links to all ClinVar pathogenic Missense variants affecting that codon. This is useful for PM5 ACMG criteria, which is an association of _this_ variant with _other_ missense changes at the same residue.
   * This final column has an arbitrary number of elements, consisting of a `+`-delimited String, each entry being an `AlleleID::GoldStars` string, where `AlleleID` is the unique identifier for the ClinVar allele, and `GoldStars` is the number of stars assigned to that allele.
 
 | Transcript | Codon | ClinVar Alleles                          |

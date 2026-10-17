@@ -28,13 +28,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
-import pandas as pd
+import pysam
 from loguru import logger
 
-import hail as hl
-
 ASSEMBLY = 'Assembly'
-GRCH37 = 'GRCh37'
 GRCH38 = 'GRCh38'
 BENIGN_SIGS = {'Benign', 'Likely benign', 'Benign/Likely benign', 'protective'}
 CONFLICTING = 'conflicting data from submitters'
@@ -53,11 +50,48 @@ USELESS_RATINGS: set[str] = set()
 MAJORITY_RATIO: float = 0.6
 MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
-ORDERED_CONTIGS: dict[str, list[str]] = {
-    GRCH38: [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM', 'chrMT'],
-    GRCH37: [*list(map(str, range(1, 23))), 'X', 'Y', 'M', 'MT'],
-}
+ORDERED_CONTIGS: list[str] = [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM', 'chrMT']
 TSV_KEYS = ['contig', 'position', 'reference', 'alternate', 'clinical_significance', 'gold_stars', 'allele_id']
+
+# contig lengths, used to write a valid VCF header
+CONTIG_LENGTHS: dict[str, int] = {
+    'chr1': 248956422,
+    'chr2': 242193529,
+    'chr3': 198295559,
+    'chr4': 190214555,
+    'chr5': 181538259,
+    'chr6': 170805979,
+    'chr7': 159345973,
+    'chr8': 145138636,
+    'chr9': 138394717,
+    'chr10': 133797422,
+    'chr11': 135086622,
+    'chr12': 133275309,
+    'chr13': 114364328,
+    'chr14': 107043718,
+    'chr15': 101991189,
+    'chr16': 90338345,
+    'chr17': 83257441,
+    'chr18': 80373285,
+    'chr19': 58617616,
+    'chr20': 64444167,
+    'chr21': 46709983,
+    'chr22': 50818468,
+    'chrX': 156040895,
+    'chrY': 57227415,
+    'chrM': 16569,
+    'chrMT': 16569,
+}
+
+VCF_INFO_HEADERS = [
+    '##INFO=<ID=allele_id,Number=1,Type=Integer,Description="ClinVar Allele ID">',
+    '##INFO=<ID=gold_stars,Number=1,Type=Integer,Description="Review confidence, re-calculated by ClinvArbitration">',
+    (
+        '##INFO=<ID=clinical_significance,Number=1,Type=String,'
+        'Description="Clinical significance, re-calculated by ClinvArbitration">'
+    ),
+]
+VCF_COLUMNS = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO'
 
 # I really want the linter to just tolerate naive datetimes, but it won't
 TIMEZONE = zoneinfo.ZoneInfo('Australia/Brisbane')
@@ -83,7 +117,7 @@ class Consequence(Enum):
 
     BENIGN = 'Benign'
     CONFLICTING = 'Conflicting'
-    PATHOGENIC = 'Pathogenic/Likely Pathogenic'
+    PATHOGENIC = 'Pathogenic'
     UNCERTAIN = 'VUS'
     UNKNOWN = 'Unknown'
 
@@ -104,7 +138,7 @@ class Submission:
     review_status: str
 
 
-def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
+def get_allele_locus_map(summary_file: str) -> dict:
     """
     Process variant_summary.txt
      - links the allele ID, Locus/Alleles, and variant ID
@@ -118,7 +152,6 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
 
     Args:
         summary_file (str): path to the gzipped text file
-        assembly (str): genome build to use
 
     Returns:
         dictionary of each variant ID to the positional details
@@ -127,12 +160,12 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
     allele_dict = {}
 
     for line in dicts_from_gzip(summary_file):
-        if line[ASSEMBLY] != assembly:
+        if line[ASSEMBLY] != GRCH38:
             continue
 
-        chromosome = f'chr{line["Chromosome"]}' if assembly == GRCH38 else line['Chromosome']
+        chromosome = f'chr{line["Chromosome"]}'
 
-        # swap chrM to something Hail will tolerate
+        # normalise mitochondrial contig naming
         if chromosome == 'chrMT':
             chromosome = 'chrM'
 
@@ -144,7 +177,7 @@ def get_allele_locus_map(summary_file: str, assembly: str) -> dict:
             continue
 
         # skip non-standard chromosomes
-        if chromosome not in ORDERED_CONTIGS[assembly]:
+        if chromosome not in ORDERED_CONTIGS:
             continue
 
         # skip chromosomal deletions and insertions, or massive indels
@@ -327,24 +360,6 @@ def process_submission_line(data: dict[str, str]) -> tuple[int, Submission]:
     return var_id, Submission(date, sub, classification, rev_status)
 
 
-def dict_list_to_ht(list_of_dicts: list) -> hl.Table:
-    """
-    takes the per-allele results and aggregates into a hl.Table
-
-    Args:
-        list_of_dicts ():
-
-    Returns:
-        Hail table of the same content, indexed on locus & alleles
-    """
-
-    # convert list of dictionaries to a DataFrame
-    pdf = pd.DataFrame(list_of_dicts)
-
-    # convert DataFrame to a Table, keyed on Locus & Alleles
-    return hl.Table.from_pandas(pdf, key=['locus', 'alleles'])
-
-
 def get_all_decisions(submission_file: str, var_ids: set[int]) -> dict[int, list[Submission]]:
     """
     obtains all submissions per-allele which pass basic criteria
@@ -402,65 +417,61 @@ def acmg_filter_submissions(subs: list[Submission]) -> list[Submission]:
     return date_filt_subs or subs
 
 
-def sort_decisions(all_subs: list[dict], assembly: str) -> list[dict]:
+def sort_decisions(all_subs: list[dict]) -> list[dict]:
     """Applies dual-layer sorting to the list of all decisions, on chr & pos."""
 
-    return sorted(all_subs, key=lambda x: (ORDERED_CONTIGS[assembly].index(x['contig']), x['position']))
+    return sorted(all_subs, key=lambda x: (ORDERED_CONTIGS.index(x['contig']), x['position']))
 
 
-def parse_into_table(tsv_path: str, out_path: str) -> hl.Table:
-    """Takes the file of one clinvar variant per line, processes that line into a table."""
+def generate_vcf_header(contigs: list[str]) -> str:
+    """Handwrite a VCF header for the given contigs, mirroring the header Hail used to export."""
 
-    ht = hl.import_table(tsv_path, types={'position': hl.tint32, 'gold_stars': hl.tint32, 'allele_id': hl.tint32})
-
-    # create a locus value, and key the table by this. Combine [ref, alt] alleles into a list
-    ht = ht.transmute(
-        locus=hl.locus(ht.contig, ht.position),
-        alleles=[ht.reference, ht.alternate],
-    )
-
-    ht = ht.key_by(ht.locus, ht.alleles)
-
-    ht = ht.annotate_globals(
-        creation_date=datetime.now(tz=TIMEZONE).strftime('%Y-%m-%d'),
-        blacklist=sorted(BLACKLIST) or ['no blacklisted sites'],
-    )
-
-    # write out to the specified location
-    ht.write(out_path, overwrite=True)
-
-    logger.info(f'Wrote ClinVar decisions HailTable to {out_path}')
-
-    # read the localised version
-    return hl.read_table(out_path)
+    header_lines = [
+        '##fileformat=VCFv4.2',
+        f'##fileDate={datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d")}',
+        '##source=ClinvArbitration',
+        *VCF_INFO_HEADERS,
+        *[f'##contig=<ID={contig},length={CONTIG_LENGTHS[contig]},assembly=GRCH38>' for contig in contigs],
+        VCF_COLUMNS,
+    ]
+    return '\n'.join(header_lines) + '\n'
 
 
-def write_vcf(clinvar_table: hl.Table, output_vcf: str, pm5_filter: bool = True):
-    """Takes a clinvar decisions HailTable, optionally filter to SNV & Pathogenic. Writes results to a VCF file."""
+def write_vcf(decisions: list[dict], output_vcf: str, pm5_filter: bool = True):
+    """Takes the sorted clinvar decisions, optionally filter to SNV & Pathogenic. Writes results to an indexed VCF."""
 
     if pm5_filter:
         # filter to Pathogenic SNVs
         # there is at least one ClinVar submission which is Pathogenic without being a changed base?
         # https://www.ncbi.nlm.nih.gov/clinvar/variation/1705890/
         # new behaviour - we're not annotating chrM sites, as the default GTF file doesn't have Mito genes, so no csq
-        clinvar_table = clinvar_table.filter(
-            (hl.len(clinvar_table.alleles[0]) == 1)
-            & (hl.len(clinvar_table.alleles[1]) == 1)
-            & (clinvar_table.clinical_significance == Consequence.PATHOGENIC.value)
-            & (clinvar_table.locus.contig != 'chrM'),
-        )
+        decisions = [
+            entry
+            for entry in decisions
+            if len(entry['alleles'][0]) == 1
+            and len(entry['alleles'][1]) == 1
+            and entry['clinical_significance'] == Consequence.PATHOGENIC.value
+            and entry['contig'] != 'chrM'
+        ]
 
-    # persist the relevant clinvar annotations in INFO (for vcf export)
-    clinvar_table = clinvar_table.transmute(
-        info=hl.struct(
-            allele_id=clinvar_table.allele_id,
-            gold_stars=clinvar_table.gold_stars,
-            clinical_significance=clinvar_table.clinical_significance,
-        ),
-    )
+    # only include contig header lines for contigs present in the data, in order of appearance
+    contigs = list(dict.fromkeys(entry['contig'] for entry in decisions))
 
-    # export this data in VCF format
-    hl.export_vcf(clinvar_table, output_vcf, tabix=True)
+    # write header and rows block-gzipped, so the result can be tabix-indexed
+    with pysam.BGZFile(output_vcf, 'wb') as handle:
+        handle.write(generate_vcf_header(contigs).encode())
+        for entry in decisions:
+            ref, alt = entry['alleles']
+            info = ';'.join(
+                [
+                    f'allele_id={entry["allele_id"]}',
+                    f'gold_stars={entry["gold_stars"]}',
+                    f'clinical_significance={entry["clinical_significance"]}',
+                ],
+            )
+            handle.write(f'{entry["contig"]}\t{entry["position"]}\t.\t{ref}\t{alt}\t.\t.\t{info}\n'.encode())
+
+    pysam.tabix_index(output_vcf, preset='vcf', force=True)
     logger.info(f'Wrote VCF to {output_vcf}')
 
 
@@ -505,20 +516,14 @@ def cli_main():
     )
     parser.add_argument(
         '-o',
-        help='output root, for table, tsv, and pathogenic-only VCF',
-        default=True,
+        help='output root, for tsv and pathogenic-only VCF',
+        required=True,
     )
     parser.add_argument(
         '-b',
         help='sites to blacklist',
         nargs='+',
         default=[],
-    )
-    parser.add_argument(
-        '--assembly',
-        help='genome build to use',
-        default='GRCh38',
-        choices=[GRCH37, GRCH38],
     )
     parser.add_argument(
         '--all_vcf',
@@ -533,13 +538,13 @@ def cli_main():
     if args.b:
         BLACKLIST.update(args.b)
 
-    main(subs=args.s, variants=args.v, output_root=args.o, assembly=args.assembly, all_vcf=args.all_vcf)
+    main(subs=args.s, variants=args.v, output_root=args.o, all_vcf=args.all_vcf)
 
 
-def main(subs: str, variants: str, output_root: str, assembly: str, all_vcf: str | None = None):
+def main(subs: str, variants: str, output_root: str, all_vcf: str | None = None):
     """Parse all ClinVar submissions, and re-summarise with new algorithm."""
     logger.info('Getting alleleID-VariantID-Loci from variant summary')
-    allele_map = get_allele_locus_map(variants, assembly)
+    allele_map = get_allele_locus_map(variants)
 
     logger.info('Getting all decisions, indexed on clinvar Var ID')
 
@@ -587,25 +592,20 @@ def main(subs: str, variants: str, output_root: str, assembly: str, all_vcf: str
 
     logger.info(f'{len(complete_decisions)} ClinVar entries remain')
 
-    # sort all collected decisions, trying to reduce overhead in HT later
-    complete_decisions_sorted = sort_decisions(complete_decisions, assembly=assembly)
+    # sort all collected decisions by contig & position, required for tabix indexing
+    complete_decisions_sorted = sort_decisions(complete_decisions)
 
     tsv_path = f'{output_root}.tsv'
     write_dicts_as_tsv(complete_decisions_sorted, output_path=tsv_path)
 
-    hl.context.init_spark(master='local[*]')
-    hl.default_reference(assembly)
-    ht_output = f'{output_root}.ht'
-    ht = parse_into_table(tsv_path=tsv_path, out_path=ht_output)
-
     # write a VCF containing all variants, not just pathogenic SNV (Echtvar use case)
     if all_vcf:
-        write_vcf(ht, all_vcf, pm5_filter=False)
+        write_vcf(complete_decisions_sorted, all_vcf, pm5_filter=False)
 
     # export the pathogenic SNVs as a tabix-indexed VCF
     vcf_output = f'{output_root}.vcf.bgz'
     logger.info(f'Writing out Pathogenic SNV VCF to {vcf_output}')
-    write_vcf(ht, vcf_output)
+    write_vcf(complete_decisions_sorted, vcf_output)
 
 
 if __name__ == '__main__':

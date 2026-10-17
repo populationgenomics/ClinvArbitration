@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 from cpg_flow.workflow import run_workflow
 
-from clinvarbitration.stages import GenerateNewZenodoRelease
+from clinvarbitration.cpg_internal.stages import GenerateNewZenodoRelease
 
 
 def cli_main():
