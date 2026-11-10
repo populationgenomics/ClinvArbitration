@@ -149,7 +149,13 @@ def publish(draft_id: int, token: str) -> dict:
     return _check(r, 'Publish')
 
 
-def main(record: int, token_secret: str, token_project: str, tarball_path: str, success_file: str) -> None:
+def main(
+    record: int,
+    token_secret: str,
+    token_project: str,
+    tarball_path: str,
+    success_file: str,
+) -> None:
     tarball = Path(tarball_path)
     if not tarball.exists():
         raise FileNotFoundError(f'File not found: {tarball}')

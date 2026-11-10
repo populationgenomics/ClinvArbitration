@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye AS basic
+FROM python:3.11-slim-trixie AS basic
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -19,7 +19,7 @@ RUN apt update && apt install --no-install-recommends -y \
 
 FROM basic AS bcftools_compiler
 
-ARG BCFTOOLS_VERSION="1.24"
+ARG BCFTOOLS_VERSION="1.25"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         gcc \
