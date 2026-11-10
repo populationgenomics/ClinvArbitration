@@ -6,12 +6,12 @@ from cpg_flow import stage, targets
 from cpg_utils import Path, config, to_path
 
 from clinvarbitration import __version__ as clinvarbitration_version
-from clinvarbitration.jobs.annotate_snvs import annotate_clinvar_snvs
-from clinvarbitration.jobs.download_latest_files import copy_latest_files
-from clinvarbitration.jobs.generate_new_summary import generate_new_summary
-from clinvarbitration.jobs.pm5_generation import generate_pm5_data
-from clinvarbitration.jobs.publish_to_zenodo import create_new_release
-from clinvarbitration.jobs.tarball_release import package_data_for_release
+from clinvarbitration.cpg_internal.jobs.annotate_snvs import annotate_clinvar_snvs
+from clinvarbitration.cpg_internal.jobs.download_latest_files import copy_latest_files
+from clinvarbitration.cpg_internal.jobs.generate_new_summary import generate_new_summary
+from clinvarbitration.cpg_internal.jobs.pm5_generation import generate_pm5_data
+from clinvarbitration.cpg_internal.jobs.publish_to_zenodo import create_new_release
+from clinvarbitration.cpg_internal.jobs.tarball_release import package_data_for_release
 
 
 @cache
@@ -47,13 +47,13 @@ class CopyLatestClinvarFiles(stage.MultiCohortStage):
     These are localised in preparation for the next stage, which will generate a re-summary of the clinvar data
     """
 
-    def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
+    def expected_outputs(self, _mc: targets.MultiCohort) -> dict[str, Path]:
         return {
             'submission_file': get_output_folder() / 'submission_summary.txt.gz',
             'variant_file': get_output_folder() / 'variant_summary.txt.gz',
         }
 
-    def queue_jobs(self, mc: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
+    def queue_jobs(self, mc: targets.MultiCohort, _inputs: stage.StageInput) -> stage.StageOutput:
         outputs = self.expected_outputs(mc)
 
         bash_job = copy_latest_files(
@@ -73,10 +73,10 @@ class GenerateNewClinvarSummary(stage.MultiCohortStage):
     then re-assessing the remaining submissions to create a more decisive classification
     """
 
-    def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
+    def expected_outputs(self, _mc: targets.MultiCohort) -> dict[str, Path]:
         return {
-            'clinvar_decisions': get_output_folder() / 'clinvar_decisions.ht.tar',
             'snv_vcf': get_output_folder() / 'clinvar_decisions.vcf.bgz',
+            'snv_vcf_index': get_output_folder() / 'clinvar_decisions.vcf.bgz.tbi',
             'tsv': get_output_folder() / 'clinvar_decisions.tsv',
         }
 
@@ -102,7 +102,7 @@ class AnnotateClinvarSnvsWithBcftools(stage.MultiCohortStage):
     this uses BCFtools for speed and re-deployability, instead of VEP
     """
 
-    def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
+    def expected_outputs(self, _mc: targets.MultiCohort) -> dict[str, Path]:
         return {'annotated': get_output_folder() / 'clinvar_decisions.annotated.tsv'}
 
     def queue_jobs(self, mc: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
@@ -120,14 +120,14 @@ class AnnotateClinvarSnvsWithBcftools(stage.MultiCohortStage):
 @stage.stage(required_stages=[AnnotateClinvarSnvsWithBcftools])
 class Pm5TableGeneration(stage.MultiCohortStage):
     """
-    Reads in the annotated variant data (in TSV format), and generates a PM5 table
+    Reads in the annotated variant data (in TSV format), and generates a PM5 lookup
     For each missense variant, we collect all other pathogenic missense variants affecting the same codon
-    This is output as an HT, and a JSON file of the raw representation
+    This is output as a JSON file, and a TSV of the raw representation
     """
 
-    def expected_outputs(self, mc: targets.MultiCohort) -> dict[str, Path]:
+    def expected_outputs(self, _mc: targets.MultiCohort) -> dict[str, Path]:
         return {
-            'ht': get_output_folder() / 'clinvar_decisions.pm5.ht.tar',
+            'json': get_output_folder() / 'clinvar_decisions.pm5.json',
             'tsv': get_output_folder() / 'clinvar_decisions.pm5.tsv',
         }
 
@@ -155,16 +155,16 @@ class Pm5TableGeneration(stage.MultiCohortStage):
 class PackageForRelease(stage.MultiCohortStage):
     """
     Takes the data created so far, and packages it up for release
-    This includes the re-summarised decisions, and the PM5 table
+    This includes the re-summarised decisions, and the PM5 lookup
     They are exported as a single tarball, which should be uploaded to the release page monthly
     """
 
-    def expected_outputs(self, multicohort: targets.MultiCohort) -> Path:
+    def expected_outputs(self, _multicohort: targets.MultiCohort) -> Path:
         return get_output_folder() / 'clinvar_decisions.release.tar.gz'
 
     def queue_jobs(self, multicohort: targets.MultiCohort, inputs: stage.StageInput) -> stage.StageOutput:
         """
-        Localise the two previously generated MatrixTables, tarball as a single file, and write out as a single file.
+        Localise the previously generated outputs, tarball them, and write out as a single file.
         """
         output = self.expected_outputs(multicohort)
 
@@ -187,7 +187,7 @@ class GenerateNewZenodoRelease(stage.MultiCohortStage):
     a new zenodo version.
     """
 
-    def expected_outputs(self, multicohort: targets.MultiCohort) -> Path:
+    def expected_outputs(self, _multicohort: targets.MultiCohort) -> Path:
         return get_output_folder() / 'zenodo_release.txt'
 
     def queue_jobs(

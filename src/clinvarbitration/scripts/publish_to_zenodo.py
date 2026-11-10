@@ -266,7 +266,7 @@ def publish(session: requests.Session, draft_id: int, token: str) -> dict:
     return _check(r, 'Publish')
 
 
-def main(
+def main(  # noqa: PLR0917
     record: int,
     token_secret: str,
     token_project: str,

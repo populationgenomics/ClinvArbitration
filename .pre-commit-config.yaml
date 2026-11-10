@@ -17,14 +17,14 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.15.1
+    rev: v0.16.2
     hooks:
       - id: ruff-format
-      - id: ruff
+      - id: ruff-check
 
   # Static type analysis (as much as it's possible in python using type hints)
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.19.1"
+    rev: "v2.3.0"
     hooks:
       - id: mypy
         args: [--pretty, --show-error-codes, --install-types, --non-interactive]
