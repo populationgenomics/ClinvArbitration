@@ -24,7 +24,9 @@ classifiers=[
 
 dependencies=[
     'loguru',
+    'oauthlib>=4.0.1',
     'pysam>=0.22',
+    'pyasn1>=0.6.5',
     'requests',
 ]
 
