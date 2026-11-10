@@ -431,7 +431,7 @@ def generate_vcf_header(contigs: list[str]) -> str:
         f'##fileDate={datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d")}',
         '##source=ClinvArbitration',
         *VCF_INFO_HEADERS,
-        *[f'##contig=<ID={contig},length={CONTIG_LENGTHS[contig]},assembly=GRCH38>' for contig in contigs],
+        *[f'##contig=<ID={contig},length={CONTIG_LENGTHS[contig]},assembly=GRCh38>' for contig in contigs],
         VCF_COLUMNS,
     ]
     return '\n'.join(header_lines) + '\n'
