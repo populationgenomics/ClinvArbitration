@@ -50,6 +50,7 @@ USELESS_RATINGS: set[str] = set()
 MAJORITY_RATIO: float = 0.6
 MINORITY_RATIO: float = 0.2
 STRONG_REVIEWS: list[str] = ['practice guideline', 'reviewed by expert panel']
+FLAGGED_REVIEW: str = 'flagged submission'
 ORDERED_CONTIGS: list[str] = [f'chr{x}' for x in list(range(1, 23))] + ['chrX', 'chrY', 'chrM', 'chrMT']
 TSV_KEYS = ['contig', 'position', 'reference', 'alternate', 'clinical_significance', 'gold_stars', 'allele_id']
 
@@ -123,7 +124,7 @@ class Consequence(Enum):
 
 
 # an example of a qualified blacklist - entries of this type and site will be ignored
-QUALIFIED_BLACKLIST = [(Consequence.BENIGN, ['illumina laboratory services; illumina'])]
+QUALIFIED_BLACKLIST = [(Consequence.BENIGN, ['Illumina Laboratory Services, Illumina'])]
 
 
 @dataclass
@@ -381,10 +382,12 @@ def get_all_decisions(submission_file: str, var_ids: set[int]) -> dict[int, list
 
         # skip rows where the variantID isn't in this mapping
         # this saves a little effort on haplotypes, CNVs, and SVs
+        # skip over flagged submissions (by review status)
         if (
             (var_id not in var_ids)
             or (line_sub.submitter in BLACKLIST)
             or (line_sub.classification == Consequence.UNKNOWN)
+            or (line_sub.review_status == FLAGGED_REVIEW)
         ):
             continue
 
