@@ -129,6 +129,14 @@ A config file is required containing a few entries, some relating to this workfl
 * `ref_fasta`: required to run bcftools csq. Must match the `genome_build`
 * `genome_build`: used to decide whether ClinVar/Annotation is sourced using GRCh37 or GRCh38 (default)
 
+## Publish to PyPi
+
+
+```shell
+> uv build
+> uv publish
+```
+
 ## Acknowledgements
 
 * [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar), for providing the data which this process is based on
